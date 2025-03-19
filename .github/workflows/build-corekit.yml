@@ -29,10 +29,11 @@ jobs:
       with:
         xcode-version: 'latest-stable'
     
-    - name: Find Build Configuration
+    - name: Debug Xcode and Project Info
       run: |
-        xcodebuild -project ClassifiedList.xcodeproj -scheme ClassifiedCoreKit -showBuildSettings | grep "BUILT_PRODUCTS_DIR"
-
+        xcodebuild -version
+        xcodebuild -list -project ClassifiedList.xcodeproj
+        
     - name: Build ClassifiedCoreKit Framework
       run: |
         xcodebuild clean build \
@@ -42,21 +43,36 @@ jobs:
           -configuration Release \
           CODE_SIGNING_ALLOWED=NO
     
-    - name: Debug Build Location
+    - name: Debug Build Output
       run: |
-        find . -name "ClassifiedCoreKit.framework" -type d
-        ls -la $(xcodebuild -project ClassifiedList.xcodeproj -scheme ClassifiedCoreKit -showBuildSettings | grep -m 1 "BUILT_PRODUCTS_DIR" | awk '{print $3}')
+        echo "Looking for Build Products directory structure:"
+        find ~/Library/Developer/Xcode/DerivedData -name "ClassifiedList*" -type d
+        echo "\nLooking for the framework:"
+        find ~/Library/Developer/Xcode/DerivedData -name "ClassifiedCoreKit.framework" -type d
 
-    - name: Get Build Directory
+    - name: Get Release Build Directory
       id: build-dir
       run: |
-        BUILD_DIR=$(xcodebuild -project ClassifiedList.xcodeproj -scheme ClassifiedCoreKit -showBuildSettings | grep -m 1 "BUILT_PRODUCTS_DIR" | awk '{print $3}')
+        BUILD_DIR=$(xcodebuild -project ClassifiedList.xcodeproj -scheme ClassifiedCoreKit -configuration Release -showBuildSettings | grep -m 1 "BUILT_PRODUCTS_DIR" | awk '{print $3}')
         echo "BUILD_DIR=$BUILD_DIR" >> $GITHUB_ENV
         echo "Build directory is: $BUILD_DIR"
+        
+        # Create directory if it doesn't exist (to avoid ls errors)
+        mkdir -p "$BUILD_DIR" || true
+        
+        echo "Contents of parent directory:"
+        ls -la "$(dirname "$BUILD_DIR")"
 
     - name: Verify Framework Structure
       run: |
-        ls -la $BUILD_DIR/ClassifiedCoreKit.framework || echo "Framework not found at expected location"
+        if [ -d "$BUILD_DIR/ClassifiedCoreKit.framework" ]; then
+          echo "Framework found at $BUILD_DIR/ClassifiedCoreKit.framework"
+          ls -la "$BUILD_DIR/ClassifiedCoreKit.framework"
+        else
+          echo "Framework not found at expected location: $BUILD_DIR/ClassifiedCoreKit.framework"
+          echo "Searching for it elsewhere:"
+          find ~/Library/Developer/Xcode/DerivedData -name "ClassifiedCoreKit.framework" -type d
+        fi
     
     - name: Create Test Script
       run: |
@@ -64,11 +80,9 @@ jobs:
         import Foundation
         import ClassifiedCoreKit
         
-        // Basic test to verify the framework can be imported and classes can be instantiated
         let category = CoreCategory(id: 1, name: "Test Category")
         print("Created category: id=\(category.id), name=\(category.name)")
         
-        // Try to create an endpoint
         if let url = URL(string: "https://example.com") {
             let endpoint = CoreEndpoint(url: url)
             print("Created endpoint with URL: \(endpoint.url)")
@@ -77,4 +91,13 @@ jobs:
         
     - name: Run Basic Test
       run: |
-        swift -F $BUILD_DIR test_framework.swift || echo "Unable to run test script with framework from $BUILD_DIR" 
+        if [ -d "$BUILD_DIR/ClassifiedCoreKit.framework" ]; then
+          swift -F "$BUILD_DIR" test_framework.swift
+        else
+          echo "Cannot run test as framework was not found"
+          FRAMEWORK_PATH=$(find ~/Library/Developer/Xcode/DerivedData -name "ClassifiedCoreKit.framework" -type d | head -1)
+          if [ ! -z "$FRAMEWORK_PATH" ]; then
+            echo "Trying with found framework at: $FRAMEWORK_PATH"
+            swift -F "$(dirname "$FRAMEWORK_PATH")" test_framework.swift
+          fi
+        fi 
