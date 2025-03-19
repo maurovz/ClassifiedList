@@ -58,6 +58,75 @@ final class APIClientTests: XCTestCase {
             XCTFail("Unexpected error: \(error)")
         }
     }
+    
+    func testRequestCancellation() async {
+        // Configure endpoint
+        let endpoint = Endpoint(url: URL(string: "https://example.com/test")!)
+        
+        // Prepare mock to handle cancellation
+        mockSession.shouldCancelRequests = true
+        
+        // Set up a task that will be cancelled
+        let task = Task {
+            do {
+                let _: [String: String] = try await sut.fetch(from: endpoint)
+                XCTFail("Expected fetch to throw a cancellation error")
+                return false
+            } catch {
+                // Check any form of cancellation error
+                if case APIError.cancelled = error {
+                    return true
+                } else if let urlError = error as? URLError, urlError.code == .cancelled {
+                    return true
+                } else if case APIError.requestFailed(let underlyingError) = error,
+                          let urlError = underlyingError as? URLError, 
+                          urlError.code == .cancelled {
+                    return true
+                }
+                
+                XCTFail("Expected cancellation error, got \(error)")
+                return false
+            }
+        }
+        
+        // Give the task a moment to start
+        try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+        
+        // Cancel the request
+        sut.cancelAllRequests()
+        
+        // Check the result
+        let result = await task.value
+        XCTAssertTrue(result, "Task should have been cancelled")
+    }
+    
+    func testCancelAllRequests() async {
+        // Set up a long-running request
+        let endpoint = Endpoint(url: URL(string: "https://example.com/test")!)
+        let longTask = Task {
+            do {
+                let _: [String: String] = try await sut.fetch(from: endpoint)
+                XCTFail("Request should have been cancelled")
+                return true
+            } catch {
+                if let urlError = error as? URLError, urlError.code == .cancelled {
+                    return true // Successfully cancelled
+                } else if case APIError.cancelled = error {
+                    return true // Successfully cancelled with our custom error
+                }
+                XCTFail("Unexpected error: \(error)")
+                return false
+            }
+        }
+        
+        // Cancel the request
+        mockSession.shouldCancelRequests = true
+        sut.cancelAllRequests()
+        
+        // Verify the task was cancelled
+        let result = await longTask.value
+        XCTAssertTrue(result, "Request should have been cancelled")
+    }
 }
 
 // MARK: - Mock Classes
@@ -73,12 +142,20 @@ class MockURLSession: URLSessionProtocol {
     var mockResponse: URLResponse?
     var mockResponses: [MockResponse] = []
     var requestCount = 0
+    var shouldCancelRequests = false
+    var dataTaskCalled = false
+    var tasks: [MockTask] = []
     
     func data(for request: URLRequest) async throws -> (Data, URLResponse) {
         requestCount += 1
+        dataTaskCalled = true
+        
+        if shouldCancelRequests {
+            throw URLError(.cancelled)
+        }
         
         if !mockResponses.isEmpty {
-            if mockResponses.count >= requestCount {
+            if requestCount <= mockResponses.count {
                 let response = mockResponses[requestCount - 1]
                 switch response {
                 case .success(let result):
@@ -98,6 +175,93 @@ class MockURLSession: URLSessionProtocol {
         }
         
         return (mockData, mockResponse)
+    }
+    
+    func dataTask(with request: URLRequest, completionHandler: @escaping (Data?, URLResponse?, Error?) -> Void) -> URLSessionDataTaskProtocol {
+        let task = MockTask(completionHandler: completionHandler)
+        tasks.append(task)
+        requestCount += 1
+        
+        if shouldCancelRequests {
+            // Simulate a cancelled task
+            DispatchQueue.main.async {
+                task.cancel()
+            }
+            return task
+        }
+        
+        // For retry test, get the appropriate response based on request count
+        if !mockResponses.isEmpty {
+            if requestCount <= mockResponses.count {
+                let response = mockResponses[requestCount - 1]
+                
+                DispatchQueue.main.async {
+                    switch response {
+                    case .success(let result):
+                        task.callCompletionHandler(data: result.0, response: result.1, error: nil)
+                    case .failure(let error):
+                        task.callCompletionHandler(data: nil, response: nil, error: error)
+                    }
+                }
+                return task
+            }
+        }
+        
+        DispatchQueue.main.async {
+            if let mockError = self.mockError {
+                task.callCompletionHandler(data: nil, response: nil, error: mockError)
+            } else if let mockData = self.mockData, let mockResponse = self.mockResponse {
+                task.callCompletionHandler(data: mockData, response: mockResponse, error: nil)
+            } else {
+                task.callCompletionHandler(data: nil, response: nil, error: NSError(domain: "MockURLSession", code: 0, userInfo: [NSLocalizedDescriptionKey: "No mock data or response set"]))
+            }
+        }
+        
+        return task
+    }
+    
+    func cancelAllTasks() {
+        for task in tasks {
+            task.cancel()
+        }
+    }
+}
+
+class MockTask: URLSessionDataTaskProtocol {
+    var isCancelled = false
+    var mockCompletionHandler: ((Data?, URLResponse?, Error?) -> Void)?
+    private var completionHandlerCalled = false
+    
+    init(completionHandler: ((Data?, URLResponse?, Error?) -> Void)? = nil) {
+        self.mockCompletionHandler = completionHandler
+    }
+    
+    func cancel() {
+        if isCancelled || completionHandlerCalled {
+            return // Already cancelled or completion handler already called
+        }
+        
+        isCancelled = true
+        
+        if let handler = mockCompletionHandler {
+            completionHandlerCalled = true
+            handler(nil, nil, URLError(.cancelled))
+            mockCompletionHandler = nil // Clear to prevent multiple calls
+        }
+    }
+    
+    func resume() {
+        // No-op for non-cancellation cases
+    }
+    
+    func callCompletionHandler(data: Data?, response: URLResponse?, error: Error?) {
+        if completionHandlerCalled {
+            return // Don't call twice
+        }
+        
+        completionHandlerCalled = true
+        mockCompletionHandler?(data, response, error)
+        mockCompletionHandler = nil // Clear to prevent multiple calls
     }
 }
 

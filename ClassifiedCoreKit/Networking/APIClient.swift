@@ -8,6 +8,7 @@ public enum APIError: Error {
     case serverError(statusCode: Int)
     case noData
     case maxRetryReached
+    case cancelled
     
     public var localizedDescription: String {
         switch self {
@@ -25,23 +26,42 @@ public enum APIError: Error {
             return "No data received"
         case .maxRetryReached:
             return "Maximum retry attempts reached"
+        case .cancelled:
+            return "Request was cancelled"
         }
     }
 }
 
 public protocol URLSessionProtocol {
     func data(for request: URLRequest) async throws -> (Data, URLResponse)
+    func dataTask(with request: URLRequest, completionHandler: @escaping (Data?, URLResponse?, Error?) -> Void) -> URLSessionDataTaskProtocol
 }
 
-extension URLSession: URLSessionProtocol {}
+public protocol URLSessionDataTaskProtocol {
+    func cancel()
+    func resume()
+}
+
+extension URLSessionTask: URLSessionDataTaskProtocol {}
+
+extension URLSession: URLSessionProtocol {
+    public func dataTask(with request: URLRequest, completionHandler: @escaping (Data?, URLResponse?, Error?) -> Void) -> URLSessionDataTaskProtocol {
+        return dataTask(with: request, completionHandler: completionHandler) as URLSessionDataTask
+    }
+}
 
 public protocol APIClientProtocol {
     func fetch<T: Codable>(from endpoint: Endpoint) async throws -> T
+    func cancelAllRequests()
 }
 
 public final class APIClient: APIClientProtocol {
     private let session: URLSessionProtocol
     private let cache: CacheManagerProtocol
+    private var activeTasks = [URLSessionDataTaskProtocol]()
+    private let taskLock = NSLock()
+    
+    private var taskCancelled = false
     
     public init(session: URLSessionProtocol = URLSession.shared, cache: CacheManagerProtocol) {
         self.session = session
@@ -66,7 +86,33 @@ public final class APIClient: APIClientProtocol {
         
         repeat {
             do {
-                let (data, response) = try await session.data(for: request)
+                // Check if the task was cancelled
+                if Task.isCancelled || taskCancelled {
+                    throw APIError.cancelled
+                }
+                
+                let (data, response) = try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<(Data, URLResponse), Error>) in
+                    let task = session.dataTask(with: request) { data, response, error in
+                        if let error = error {
+                            continuation.resume(throwing: error)
+                            return
+                        }
+                        
+                        guard let data = data, let response = response else {
+                            continuation.resume(throwing: APIError.noData)
+                            return
+                        }
+                        
+                        continuation.resume(returning: (data, response))
+                    }
+                    
+                    // Add task to active tasks
+                    taskLock.lock()
+                    activeTasks.append(task)
+                    taskLock.unlock()
+                    
+                    task.resume()
+                }
                 
                 guard let httpResponse = response as? HTTPURLResponse else {
                     throw APIError.invalidResponse
@@ -92,6 +138,15 @@ public final class APIClient: APIClientProtocol {
                     throw APIError.decodingFailed(error)
                 }
             } catch {
+                // If the task was cancelled, propagate the cancellation
+                if let urlError = error as? URLError, urlError.code == .cancelled {
+                    throw APIError.cancelled
+                }
+                
+                if case APIError.cancelled = error {
+                    throw error
+                }
+                
                 lastError = error
                 attemptCount += 1
                 
@@ -118,6 +173,22 @@ public final class APIClient: APIClientProtocol {
         } else {
             throw APIError.maxRetryReached
         }
+    }
+    
+    public func cancelAllRequests() {
+        taskCancelled = true
+        
+        taskLock.lock()
+        let tasks = activeTasks
+        taskLock.unlock()
+        
+        for task in tasks {
+            task.cancel()
+        }
+        
+        taskLock.lock()
+        activeTasks.removeAll()
+        taskLock.unlock()
     }
     
     private func calculateBackoff(attempt: Int) -> Double {
