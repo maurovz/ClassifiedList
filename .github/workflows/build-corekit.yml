@@ -41,63 +41,44 @@ jobs:
           -scheme ClassifiedCoreKit \
           -destination "platform=macOS" \
           -configuration Release \
-          CODE_SIGNING_ALLOWED=NO
+          CODE_SIGNING_ALLOWED=NO \
+          SYMROOT=./build
     
-    - name: Debug Build Output
+    - name: Locate and Examine Framework
       run: |
-        echo "Looking for Build Products directory structure:"
-        find ~/Library/Developer/Xcode/DerivedData -name "ClassifiedList*" -type d
-        echo "\nLooking for the framework:"
-        find ~/Library/Developer/Xcode/DerivedData -name "ClassifiedCoreKit.framework" -type d
-
-    - name: Get Release Build Directory
-      id: build-dir
-      run: |
-        BUILD_DIR=$(xcodebuild -project ClassifiedList.xcodeproj -scheme ClassifiedCoreKit -configuration Release -showBuildSettings | grep -m 1 "BUILT_PRODUCTS_DIR" | awk '{print $3}')
-        echo "BUILD_DIR=$BUILD_DIR" >> $GITHUB_ENV
-        echo "Build directory is: $BUILD_DIR"
+        echo "Looking for framework in the build directory:"
+        find ./build -name "ClassifiedCoreKit.framework" -type d
         
-        # Create directory if it doesn't exist (to avoid ls errors)
-        mkdir -p "$BUILD_DIR" || true
+        FRAMEWORK_PATH=$(find ./build -name "ClassifiedCoreKit.framework" -type d | head -1)
         
-        echo "Contents of parent directory:"
-        ls -la "$(dirname "$BUILD_DIR")"
-
-    - name: Verify Framework Structure
-      run: |
-        if [ -d "$BUILD_DIR/ClassifiedCoreKit.framework" ]; then
-          echo "Framework found at $BUILD_DIR/ClassifiedCoreKit.framework"
-          ls -la "$BUILD_DIR/ClassifiedCoreKit.framework"
-        else
-          echo "Framework not found at expected location: $BUILD_DIR/ClassifiedCoreKit.framework"
-          echo "Searching for it elsewhere:"
-          find ~/Library/Developer/Xcode/DerivedData -name "ClassifiedCoreKit.framework" -type d
+        if [ -z "$FRAMEWORK_PATH" ]; then
+          echo "Framework not found in build directory"
+          exit 1
         fi
+        
+        echo "Found framework at: $FRAMEWORK_PATH"
+        ls -la "$FRAMEWORK_PATH"
+        
+        echo "Framework binary info:"
+        file "$FRAMEWORK_PATH/ClassifiedCoreKit"
+        
+        echo "Framework architectures:"
+        lipo -info "$FRAMEWORK_PATH/ClassifiedCoreKit" || echo "Not a universal binary"
+        
+        echo "Framework symbols:"
+        nm -gU "$FRAMEWORK_PATH/ClassifiedCoreKit" | grep ClassifiedCoreKit || echo "No public symbols found"
+        
+        echo "FRAMEWORK_PATH=$FRAMEWORK_PATH" >> $GITHUB_ENV
     
-    - name: Create Test Script
+    - name: Verify Framework With Simple Command
       run: |
-        cat > test_framework.swift << EOF
-        import Foundation
-        import ClassifiedCoreKit
-        
-        let category = CoreCategory(id: 1, name: "Test Category")
-        print("Created category: id=\(category.id), name=\(category.name)")
-        
-        if let url = URL(string: "https://example.com") {
-            let endpoint = CoreEndpoint(url: url)
-            print("Created endpoint with URL: \(endpoint.url)")
-        }
-        EOF
-        
-    - name: Run Basic Test
-      run: |
-        if [ -d "$BUILD_DIR/ClassifiedCoreKit.framework" ]; then
-          swift -F "$BUILD_DIR" test_framework.swift
+        if [ -d "$FRAMEWORK_PATH" ]; then
+          echo "import ClassifiedCoreKit; print(\"Framework successfully imported\")" > simple_test.swift
+          
+          echo "Attempting to compile and run with Swift:"
+          swiftc -F "$(dirname "$FRAMEWORK_PATH")" -framework ClassifiedCoreKit simple_test.swift -o simple_test || (echo "Compilation failed"; exit 1)
+          ./simple_test
         else
-          echo "Cannot run test as framework was not found"
-          FRAMEWORK_PATH=$(find ~/Library/Developer/Xcode/DerivedData -name "ClassifiedCoreKit.framework" -type d | head -1)
-          if [ ! -z "$FRAMEWORK_PATH" ]; then
-            echo "Trying with found framework at: $FRAMEWORK_PATH"
-            swift -F "$(dirname "$FRAMEWORK_PATH")" test_framework.swift
-          fi
+          echo "Cannot verify framework - not found"
+          exit 1
         fi 
