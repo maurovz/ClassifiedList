@@ -33,7 +33,6 @@ public enum APIError: Error {
 }
 
 public protocol URLSessionProtocol {
-    func data(for request: URLRequest) async throws -> (Data, URLResponse)
     func dataTask(with request: URLRequest, completionHandler: @escaping (Data?, URLResponse?, Error?) -> Void) -> URLSessionDataTaskProtocol
 }
 
@@ -51,7 +50,7 @@ extension URLSession: URLSessionProtocol {
 }
 
 public protocol APIClientProtocol {
-    func fetch<T: Codable>(from endpoint: Endpoint) async throws -> T
+    func fetch<T: Codable>(from endpoint: Endpoint, completion: @escaping (Result<T, Error>) -> Void)
     func cancelAllRequests()
 }
 
@@ -68,110 +67,140 @@ public final class APIClient: APIClientProtocol {
         self.cache = cache
     }
     
-    public func fetch<T: Codable>(from endpoint: Endpoint) async throws -> T {
+    public func fetch<T: Codable>(from endpoint: Endpoint, completion: @escaping (Result<T, Error>) -> Void) {
+        // Try to get cached data first
         if let cachedData: T = try? cache.fetch(for: endpoint.url.absoluteString) {
-            return cachedData
+            completion(.success(cachedData))
+            return
         }
         
         guard let url = URL(string: endpoint.url.absoluteString) else {
-            throw APIError.invalidURL
+            completion(.failure(APIError.invalidURL))
+            return
         }
         
         var request = URLRequest(url: url)
         request.httpMethod = endpoint.method.rawValue
         request.timeoutInterval = endpoint.timeoutInterval
         
-        var attemptCount = 0
-        var lastError: Error?
+        performRequest(request: request, endpoint: endpoint, attemptCount: 0, completion: completion)
+    }
+    
+    private func performRequest<T: Codable>(
+        request: URLRequest,
+        endpoint: Endpoint,
+        attemptCount: Int,
+        lastError: Error? = nil,
+        completion: @escaping (Result<T, Error>) -> Void
+    ) {
+        // Check if the task was cancelled
+        if taskCancelled {
+            completion(.failure(APIError.cancelled))
+            return
+        }
         
-        repeat {
-            do {
-                // Check if the task was cancelled
-                if Task.isCancelled || taskCancelled {
-                    throw APIError.cancelled
-                }
-                
-                let (data, response) = try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<(Data, URLResponse), Error>) in
-                    let task = session.dataTask(with: request) { data, response, error in
-                        if let error = error {
-                            continuation.resume(throwing: error)
-                            return
-                        }
-                        
-                        guard let data = data, let response = response else {
-                            continuation.resume(throwing: APIError.noData)
-                            return
-                        }
-                        
-                        continuation.resume(returning: (data, response))
-                    }
-                    
-                    // Add task to active tasks
-                    taskLock.lock()
-                    activeTasks.append(task)
-                    taskLock.unlock()
-                    
-                    task.resume()
-                }
-                
-                guard let httpResponse = response as? HTTPURLResponse else {
-                    throw APIError.invalidResponse
-                }
-                
-                guard (200...299).contains(httpResponse.statusCode) else {
-                    throw APIError.serverError(statusCode: httpResponse.statusCode)
-                }
-                
-                guard !data.isEmpty else {
-                    throw APIError.noData
-                }
-                
-                do {
-                    let decoder = JSONDecoder()
-                    decoder.keyDecodingStrategy = .convertFromSnakeCase
-                    let decodedData = try decoder.decode(T.self, from: data)
-                    
-                    try cache.save(decodedData, for: endpoint.url.absoluteString)
-                    
-                    return decodedData
-                } catch {
-                    throw APIError.decodingFailed(error)
-                }
-            } catch {
-                // If the task was cancelled, propagate the cancellation
-                if let urlError = error as? URLError, urlError.code == .cancelled {
-                    throw APIError.cancelled
-                }
-                
-                if case APIError.cancelled = error {
-                    throw error
-                }
-                
-                lastError = error
-                attemptCount += 1
-                
-                if attemptCount <= endpoint.retryCount {
-                    if let nsError = error as NSError?,
-                       nsError.domain == NSURLErrorDomain,
-                       [NSURLErrorTimedOut, NSURLErrorNetworkConnectionLost, NSURLErrorNotConnectedToInternet].contains(nsError.code) {
-                        // This is a retryable network error, wait before retrying
-                        let delay = calculateBackoff(attempt: attemptCount)
-                        try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
-                        continue
-                    }
-                }
-                
-                if let apiError = error as? APIError {
-                    throw apiError
-                }
-                throw APIError.requestFailed(error)
+        let task = session.dataTask(with: request) { [weak self] data, response, error in
+            guard let self = self else { return }
+            
+            // Handle cancellation
+            if let error = error as NSError?, error.domain == NSURLErrorDomain, error.code == NSURLErrorCancelled {
+                completion(.failure(APIError.cancelled))
+                return
             }
-        } while attemptCount <= endpoint.retryCount
+            
+            // Handle other errors
+            if let error = error {
+                self.handleRequestError(
+                    error: error,
+                    request: request,
+                    endpoint: endpoint,
+                    attemptCount: attemptCount,
+                    completion: completion
+                )
+                return
+            }
+            
+            guard let data = data, let httpResponse = response as? HTTPURLResponse else {
+                completion(.failure(APIError.noData))
+                return
+            }
+            
+            guard (200...299).contains(httpResponse.statusCode) else {
+                completion(.failure(APIError.serverError(statusCode: httpResponse.statusCode)))
+                return
+            }
+            
+            guard !data.isEmpty else {
+                completion(.failure(APIError.noData))
+                return
+            }
+            
+            do {
+                let decoder = JSONDecoder()
+                decoder.keyDecodingStrategy = .convertFromSnakeCase
+                let decodedData = try decoder.decode(T.self, from: data)
+                
+                // Try to save to cache
+                try? self.cache.save(decodedData, for: endpoint.url.absoluteString)
+                
+                completion(.success(decodedData))
+            } catch {
+                completion(.failure(APIError.decodingFailed(error)))
+            }
+        }
         
-        if let lastError = lastError {
-            throw APIError.requestFailed(lastError)
+        // Add task to active tasks
+        taskLock.lock()
+        activeTasks.append(task)
+        taskLock.unlock()
+        
+        task.resume()
+    }
+    
+    private func handleRequestError<T: Codable>(
+        error: Error,
+        request: URLRequest,
+        endpoint: Endpoint,
+        attemptCount: Int,
+        completion: @escaping (Result<T, Error>) -> Void
+    ) {
+        let nextAttempt = attemptCount + 1
+        
+        if nextAttempt <= endpoint.retryCount {
+            if let nsError = error as NSError?,
+               nsError.domain == NSURLErrorDomain,
+               [NSURLErrorTimedOut, NSURLErrorNetworkConnectionLost, NSURLErrorNotConnectedToInternet].contains(nsError.code) {
+                // This is a retryable network error, wait before retrying
+                let delay = calculateBackoff(attempt: nextAttempt)
+                
+                DispatchQueue.global().asyncAfter(deadline: .now() + delay) { [weak self] in
+                    guard let self = self else { return }
+                    
+                    // Check if the task was cancelled during the delay
+                    if self.taskCancelled {
+                        completion(.failure(APIError.cancelled))
+                        return
+                    }
+                    
+                    self.performRequest(
+                        request: request,
+                        endpoint: endpoint,
+                        attemptCount: nextAttempt,
+                        lastError: error,
+                        completion: completion
+                    )
+                }
+                return
+            }
+        }
+        
+        // If we've reached the maximum retry count or the error isn't retryable
+        if attemptCount >= endpoint.retryCount {
+            completion(.failure(APIError.maxRetryReached))
+        } else if let apiError = error as? APIError {
+            completion(.failure(apiError))
         } else {
-            throw APIError.maxRetryReached
+            completion(.failure(APIError.requestFailed(error)))
         }
     }
     
