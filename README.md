@@ -1,12 +1,14 @@
 # ClassifiedList
 
+[![Build ClassifiedCoreKit](https://github.com/maurovz/ClassifiedList/actions/workflows/build-corekit.yml/badge.svg)](https://github.com/maurovz/ClassifiedList/actions/workflows/build-corekit.yml)
+
 A universal iOS application that displays classified ads fetched from an API, with the ability to filter by categories and view detailed information.
 
 ## Architecture
 
 The project follows a clean, modular architecture with two main components:
 
-### 1. ClassifiedCoreKit Framework (macOS)
+### 1. CoreKit Framework (macOS)
 A shared framework containing:
 - **Networking Layer**
   - REST API client

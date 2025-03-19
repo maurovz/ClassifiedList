@@ -1,0 +1,65 @@
+name: Build ClassifiedCoreKit
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'ClassifiedCoreKit/**'
+      - 'ClassifiedList.xcodeproj/**'
+      - '.github/workflows/build-corekit.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'ClassifiedCoreKit/**'
+      - 'ClassifiedList.xcodeproj/**'
+      - '.github/workflows/build-corekit.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build ClassifiedCoreKit Framework
+    runs-on: macos-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+
+    - name: Set up Xcode
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: 'latest-stable'
+
+    - name: Build ClassifiedCoreKit Framework
+      run: |
+        xcodebuild clean build \
+          -project ClassifiedList.xcodeproj \
+          -scheme ClassifiedCoreKit \
+          -destination "platform=macOS" \
+          -configuration Release \
+          CODE_SIGNING_ALLOWED=NO
+
+    - name: Verify Framework Structure
+      run: |
+        ls -la build/Release/ClassifiedCoreKit.framework
+        file build/Release/ClassifiedCoreKit.framework/ClassifiedCoreKit
+        
+    - name: Create Test Script
+      run: |
+        cat > test_framework.swift << EOF
+        import Foundation
+        import ClassifiedCoreKit
+        
+        // Basic test to verify the framework can be imported and classes can be instantiated
+        let category = CoreCategory(id: 1, name: "Test Category")
+        print("Created category: id=\(category.id), name=\(category.name)")
+        
+        // Try to create an endpoint
+        if let url = URL(string: "https://example.com") {
+            let endpoint = CoreEndpoint(url: url)
+            print("Created endpoint with URL: \(endpoint.url)")
+        }
+        EOF
+        
+    - name: Run Basic Test
+      run: |
+        swift -framework build/Release/ClassifiedCoreKit.framework test_framework.swift 
