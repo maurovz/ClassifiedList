@@ -41,66 +41,80 @@ public class ImageLoader {
     }
     
     #if canImport(UIKit)
-    public func loadImage(from url: URL?) async throws -> UIImage {
+    public func loadImage(from url: URL?, completion: @escaping (Result<UIImage, ImageLoadingError>) -> Void) {
         guard let url = url else {
-            throw ImageLoadingError.invalidURL
+            completion(.failure(.invalidURL))
+            return
         }
         
         let key = url.absoluteString as NSString
         
         if let cachedImage = cache.object(forKey: key) as? UIImage {
-            return cachedImage
+            completion(.success(cachedImage))
+            return
         }
         
-        do {
-            let (data, _) = try await session.data(from: url)
+        let task = session.dataTask(with: url) { [weak self] data, response, error in
+            if let error = error {
+                completion(.failure(.networkError(error)))
+                return
+            }
             
-            guard !data.isEmpty else {
-                throw ImageLoadingError.invalidData
+            guard let data = data, !data.isEmpty else {
+                completion(.failure(.invalidData))
+                return
             }
             
             guard let image = UIImage(data: data) else {
-                throw ImageLoadingError.decodingError
+                completion(.failure(.decodingError))
+                return
             }
             
-            cache.setObject(image, forKey: key)
+            self?.cache.setObject(image, forKey: key)
             
-            return image
-        } catch {
-            throw ImageLoadingError.networkError(error)
+            completion(.success(image))
         }
+        
+        task.resume()
     }
     #endif
     
     #if canImport(AppKit)
-    public func loadImage(from url: URL?) async throws -> NSImage {
+    public func loadImage(from url: URL?, completion: @escaping (Result<NSImage, ImageLoadingError>) -> Void) {
         guard let url = url else {
-            throw ImageLoadingError.invalidURL
+            completion(.failure(.invalidURL))
+            return
         }
         
         let key = url.absoluteString as NSString
         
         if let cachedImage = cache.object(forKey: key) as? NSImage {
-            return cachedImage
+            completion(.success(cachedImage))
+            return
         }
         
-        do {
-            let (data, _) = try await session.data(from: url)
+        let task = session.dataTask(with: url) { [weak self] data, response, error in
+            if let error = error {
+                completion(.failure(.networkError(error)))
+                return
+            }
             
-            guard !data.isEmpty else {
-                throw ImageLoadingError.invalidData
+            guard let data = data, !data.isEmpty else {
+                completion(.failure(.invalidData))
+                return
             }
             
             guard let image = NSImage(data: data) else {
-                throw ImageLoadingError.decodingError
+                completion(.failure(.decodingError))
+                return
             }
             
-            cache.setObject(image, forKey: key)
+            self?.cache.setObject(image, forKey: key)
             
-            return image
-        } catch {
-            throw ImageLoadingError.networkError(error)
+            completion(.success(image))
         }
+        
+        task.resume()
     }
     #endif
     
