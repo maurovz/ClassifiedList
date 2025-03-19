@@ -27,7 +27,7 @@ public enum APIError: Error {
 }
 
 public protocol APIClientProtocol {
-    func fetch<T: Decodable>(from endpoint: Endpoint) async throws -> T
+    func fetch<T: Codable>(from endpoint: Endpoint) async throws -> T
 }
 
 public final class APIClient: APIClientProtocol {
@@ -39,13 +39,11 @@ public final class APIClient: APIClientProtocol {
         self.cache = cache
     }
     
-    public func fetch<T: Decodable>(from endpoint: Endpoint) async throws -> T {
-        // Try to get from cache first
+    public func fetch<T: Codable>(from endpoint: Endpoint) async throws -> T {
         if let cachedData: T = try? cache.fetch(for: endpoint.url.absoluteString) {
             return cachedData
         }
         
-        // If not in cache, perform network request
         guard let url = URL(string: endpoint.url.absoluteString) else {
             throw APIError.invalidURL
         }
@@ -73,7 +71,6 @@ public final class APIClient: APIClientProtocol {
                 decoder.keyDecodingStrategy = .convertFromSnakeCase
                 let decodedData = try decoder.decode(T.self, from: data)
                 
-                // Save to cache
                 try cache.save(decodedData, for: endpoint.url.absoluteString)
                 
                 return decodedData

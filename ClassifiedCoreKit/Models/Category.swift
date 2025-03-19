@@ -10,7 +10,6 @@ public struct Category: Codable, Identifiable, Hashable {
     }
 }
 
-// Extend for special "All Categories" option
 public extension Category {
     static let all = Category(id: -1, name: "All Categories")
 } 

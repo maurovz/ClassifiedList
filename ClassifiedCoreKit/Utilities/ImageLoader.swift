@@ -48,12 +48,10 @@ public class ImageLoader {
         
         let key = url.absoluteString as NSString
         
-        // Check cache first
         if let cachedImage = cache.object(forKey: key) as? UIImage {
             return cachedImage
         }
         
-        // If not in cache, download
         do {
             let (data, _) = try await session.data(from: url)
             
@@ -65,7 +63,6 @@ public class ImageLoader {
                 throw ImageLoadingError.decodingError
             }
             
-            // Save to cache
             cache.setObject(image, forKey: key)
             
             return image
@@ -83,12 +80,10 @@ public class ImageLoader {
         
         let key = url.absoluteString as NSString
         
-        // Check cache first
         if let cachedImage = cache.object(forKey: key) as? NSImage {
             return cachedImage
         }
         
-        // If not in cache, download
         do {
             let (data, _) = try await session.data(from: url)
             
@@ -100,7 +95,6 @@ public class ImageLoader {
                 throw ImageLoadingError.decodingError
             }
             
-            // Save to cache
             cache.setObject(image, forKey: key)
             
             return image
