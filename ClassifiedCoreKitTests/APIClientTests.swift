@@ -22,11 +22,9 @@ final class APIClientTests: XCTestCase {
     }
     
     func testFetchWithTimeout() {
-        // Set up mock session to simulate timeout
         let endpoint = Endpoint(url: URL(string: "https://example.com/test")!)
         let timeoutError = NSError(domain: NSURLErrorDomain, code: NSURLErrorTimedOut, userInfo: nil)
         
-        // Use mockResponses instead of mockError for more consistent behavior
         mockSession.mockResponses = [
             .failure(timeoutError)
         ]
@@ -41,8 +39,6 @@ final class APIClientTests: XCTestCase {
                 if case APIError.requestFailed(let underlyingError) = error {
                     XCTAssertEqual((underlyingError as NSError).code, NSURLErrorTimedOut)
                 } else if case APIError.maxRetryReached = error {
-                    // This is also acceptable as the timeout could be treated as a retryable error
-                    // that hit its max retries (which is 0 by default)
                     XCTAssertEqual(self.mockSession.requestCount, 1)
                 } else {
                     XCTFail("Unexpected error type: \(error)")
@@ -55,10 +51,8 @@ final class APIClientTests: XCTestCase {
     }
     
     func testFetchWithRetry() {
-        // Configure endpoint with retry count
         let endpoint = Endpoint(url: URL(string: "https://example.com/test")!, method: .get, retryCount: 3)
         
-        // First two attempts fail, third succeeds
         mockSession.mockResponses = [
             .failure(NSError(domain: NSURLErrorDomain, code: NSURLErrorTimedOut, userInfo: nil)),
             .failure(NSError(domain: NSURLErrorDomain, code: NSURLErrorNetworkConnectionLost, userInfo: nil)),
@@ -78,33 +72,26 @@ final class APIClientTests: XCTestCase {
             expectation.fulfill()
         }
         
-        wait(for: [expectation], timeout: 10.0) // Allow enough time for retries
+        wait(for: [expectation], timeout: 10.0)
     }
     
     func testRequestCancellation() {
-        // Configure endpoint
         let endpoint = Endpoint(url: URL(string: "https://example.com/test")!)
         
-        // Prepare mock to handle cancellation
         mockSession.shouldCancelRequests = true
         
         let expectation = XCTestExpectation(description: "Request cancellation")
         
-        // Set up a request that will be cancelled
         sut.fetch(from: endpoint) { (result: Result<[String: String], Error>) in
             switch result {
             case .success:
                 XCTFail("Expected fetch to be cancelled")
             case .failure(let error):
-                // Check any form of cancellation error
                 if case APIError.cancelled = error {
-                    // Successfully cancelled
                 } else if let urlError = error as? URLError, urlError.code == .cancelled {
-                    // Successfully cancelled with URLError
                 } else if case APIError.requestFailed(let underlyingError) = error,
                           let urlError = underlyingError as? URLError, 
                           urlError.code == .cancelled {
-                    // Successfully cancelled with underlying URLError
                 } else {
                     XCTFail("Expected cancellation error, got \(error)")
                 }
@@ -122,7 +109,6 @@ final class APIClientTests: XCTestCase {
     }
     
     func testCancelAllRequests() {
-        // Set up a long-running request
         let endpoint = Endpoint(url: URL(string: "https://example.com/test")!)
         
         let expectation = XCTestExpectation(description: "Cancel all requests")
@@ -133,9 +119,7 @@ final class APIClientTests: XCTestCase {
                 XCTFail("Request should have been cancelled")
             case .failure(let error):
                 if let urlError = error as? URLError, urlError.code == .cancelled {
-                    // Successfully cancelled
                 } else if case APIError.cancelled = error {
-                    // Successfully cancelled with our custom error
                 } else {
                     XCTFail("Unexpected error: \(error)")
                 }
@@ -143,7 +127,6 @@ final class APIClientTests: XCTestCase {
             expectation.fulfill()
         }
         
-        // Cancel the request
         mockSession.shouldCancelRequests = true
         sut.cancelAllRequests()
         
@@ -174,14 +157,12 @@ class MockURLSession: URLSessionProtocol {
         requestCount += 1
         
         if shouldCancelRequests {
-            // Simulate a cancelled task
             DispatchQueue.main.async {
                 task.cancel()
             }
             return task
         }
         
-        // For retry test, get the appropriate response based on request count
         if !mockResponses.isEmpty {
             if requestCount <= mockResponses.count {
                 let response = mockResponses[requestCount - 1]
@@ -229,7 +210,7 @@ class MockTask: URLSessionDataTaskProtocol {
     
     func cancel() {
         if isCancelled || completionHandlerCalled {
-            return // Already cancelled or completion handler already called
+            return
         }
         
         isCancelled = true
@@ -237,22 +218,21 @@ class MockTask: URLSessionDataTaskProtocol {
         if let handler = mockCompletionHandler {
             completionHandlerCalled = true
             handler(nil, nil, URLError(.cancelled))
-            mockCompletionHandler = nil // Clear to prevent multiple calls
+            mockCompletionHandler = nil
         }
     }
     
     func resume() {
-        // No-op for non-cancellation cases
     }
     
     func callCompletionHandler(data: Data?, response: URLResponse?, error: Error?) {
         if completionHandlerCalled {
-            return // Don't call twice
+            return
         }
         
         completionHandlerCalled = true
         mockCompletionHandler?(data, response, error)
-        mockCompletionHandler = nil // Clear to prevent multiple calls
+        mockCompletionHandler = nil
     }
 }
 
@@ -294,4 +274,4 @@ class MockCacheManager: CacheManagerProtocol {
     func clearCache() throws {
         savedItems.removeAll()
     }
-} 
+}
