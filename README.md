@@ -6,7 +6,7 @@ A universal iOS application that displays classified ads fetched from an API, wi
 
 The project follows a clean, modular architecture with two main components:
 
-### 1. CoreKit Framework (macOS)
+### 1. ClassifiedCoreKit Framework (macOS)
 A shared framework containing:
 - **Networking Layer**
   - REST API client
