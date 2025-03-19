@@ -68,17 +68,47 @@ jobs:
         echo "Framework symbols:"
         nm -gU "$FRAMEWORK_PATH/ClassifiedCoreKit" | grep ClassifiedCoreKit || echo "No public symbols found"
         
+        echo "Framework install name:"
+        otool -L "$FRAMEWORK_PATH/ClassifiedCoreKit" | grep ClassifiedCoreKit
+        
         echo "FRAMEWORK_PATH=$FRAMEWORK_PATH" >> $GITHUB_ENV
+        echo "FRAMEWORK_DIR=$(dirname "$FRAMEWORK_PATH")" >> $GITHUB_ENV
     
-    - name: Verify Framework With Simple Command
+    - name: Static Verification of Framework
       run: |
         if [ -d "$FRAMEWORK_PATH" ]; then
-          echo "import ClassifiedCoreKit; print(\"Framework successfully imported\")" > simple_test.swift
+          # Create directory for frameworks
+          mkdir -p ~/Library/Frameworks/
           
-          echo "Attempting to compile and run with Swift:"
-          swiftc -F "$(dirname "$FRAMEWORK_PATH")" -framework ClassifiedCoreKit simple_test.swift -o simple_test || (echo "Compilation failed"; exit 1)
-          ./simple_test
+          # Copy framework to a standard location
+          cp -R "$FRAMEWORK_PATH" ~/Library/Frameworks/
+          
+          # Create a simple test file
+          echo 'import ClassifiedCoreKit' > verify.swift
+          echo 'print("Framework verified!")' >> verify.swift
+          
+          # Try to compile it - this verifies the framework structure without running
+          swiftc -F ~/Library/Frameworks verify.swift -o verify_static
+          
+          echo "✅ Framework can be statically linked"
         else
-          echo "Cannot verify framework - not found"
+          echo "❌ Framework not found"
+          exit 1
+        fi
+    
+    - name: Dynamic Verification of Framework
+      run: |
+        if [ -d "$FRAMEWORK_PATH" ]; then
+          # Approach 1: Use env var to locate framework
+          echo "import ClassifiedCoreKit; print(\"Framework successfully imported\")" > test_env.swift
+          swiftc -F "$FRAMEWORK_DIR" test_env.swift -o test_env
+          DYLD_FRAMEWORK_PATH="$FRAMEWORK_DIR" ./test_env && echo "✅ Dynamic linking with DYLD_FRAMEWORK_PATH works"
+          
+          # Approach 2: Embed runtime path in the binary
+          echo "import ClassifiedCoreKit; print(\"Framework successfully imported\")" > test_rpath.swift
+          swiftc -F "$FRAMEWORK_DIR" -Xlinker -rpath -Xlinker "$FRAMEWORK_DIR" test_rpath.swift -o test_rpath
+          ./test_rpath && echo "✅ Dynamic linking with embedded @rpath works"
+        else
+          echo "❌ Framework not found"
           exit 1
         fi 
