@@ -68,7 +68,6 @@ public final class APIClient: APIClientProtocol {
     }
     
     public func fetch<T: Codable>(from endpoint: Endpoint, completion: @escaping (Result<T, Error>) -> Void) {
-        // Try to get cached data first
         if let cachedData: T = try? cache.fetch(for: endpoint.url.absoluteString) {
             completion(.success(cachedData))
             return
@@ -93,7 +92,6 @@ public final class APIClient: APIClientProtocol {
         lastError: Error? = nil,
         completion: @escaping (Result<T, Error>) -> Void
     ) {
-        // Check if the task was cancelled
         if taskCancelled {
             completion(.failure(APIError.cancelled))
             return
@@ -102,13 +100,11 @@ public final class APIClient: APIClientProtocol {
         let task = session.dataTask(with: request) { [weak self] data, response, error in
             guard let self = self else { return }
             
-            // Handle cancellation
             if let error = error as NSError?, error.domain == NSURLErrorDomain, error.code == NSURLErrorCancelled {
                 completion(.failure(APIError.cancelled))
                 return
             }
             
-            // Handle other errors
             if let error = error {
                 self.handleRequestError(
                     error: error,
@@ -140,7 +136,6 @@ public final class APIClient: APIClientProtocol {
                 decoder.keyDecodingStrategy = .convertFromSnakeCase
                 let decodedData = try decoder.decode(T.self, from: data)
                 
-                // Try to save to cache
                 try? self.cache.save(decodedData, for: endpoint.url.absoluteString)
                 
                 completion(.success(decodedData))
@@ -149,7 +144,6 @@ public final class APIClient: APIClientProtocol {
             }
         }
         
-        // Add task to active tasks
         taskLock.lock()
         activeTasks.append(task)
         taskLock.unlock()
