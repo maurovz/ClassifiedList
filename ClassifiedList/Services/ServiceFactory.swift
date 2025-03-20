@@ -35,8 +35,7 @@ class ServiceFactory {
     }
     
     func createMemoryCache() -> CoreCacheManagerProtocol {
-        // Replace this with the actual way to create a memory-only cache
-        return CoreCacheManager.createInMemoryCache()
+        return InMemoryCacheManager()
     }
     
     func createImageLoader() -> CoreImageLoader {
