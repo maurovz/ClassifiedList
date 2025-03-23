@@ -97,7 +97,6 @@ class ClassifiedAdCell: UICollectionViewCell {
         containerView.addSubview(urgentBadge)
         urgentBadge.addSubview(urgentLabel)
         
-        // Layout using UIView+Layout
         containerView.anchor(
             top: contentView.topAnchor, paddingTop: 4,
             left: contentView.leadingAnchor, paddingLeft: 4,

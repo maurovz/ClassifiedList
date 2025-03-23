@@ -64,15 +64,12 @@ class ClassifiedListViewModel {
         self.selectedCategoryId = categoryId
         
         if categoryId == Category.all.id {
-            // If "All" category is selected, show all ads but sort urgent ones first
             filteredAds = sortedAds(allAds)
         } else {
-            // Filter by category and sort (urgent first)
             let filtered = allAds.filter { $0.categoryId == categoryId }
             filteredAds = sortedAds(filtered)
         }
         
-        // Notify that the data has changed
         onStateChange?(.loaded)
     }
     
@@ -87,7 +84,6 @@ class ClassifiedListViewModel {
     
     // MARK: - Private Methods
     private func sortedAds(_ ads: [CoreClassifiedAd]) -> [CoreClassifiedAd] {
-        // Sort by urgency (urgent first) and then by date
         return ads.sorted { (first, second) -> Bool in
             if first.isUrgent != second.isUrgent {
                 return first.isUrgent
