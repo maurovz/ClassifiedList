@@ -43,6 +43,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		542277332D90638800751DD9 /* ClassifiedApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ClassifiedApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		54818F5D2D8990FE00C5F3AF /* ClassifiedList.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ClassifiedList.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5494DBEC2D8AF57800317DC4 /* ClassifiedCoreKit.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = ClassifiedCoreKit.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		5494DC472D8B117600317DC4 /* ClassifiedCoreKitTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ClassifiedCoreKitTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -50,6 +51,13 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		542277462D90638A00751DD9 /* Exceptions for "ClassifiedApp" folder in "ClassifiedApp" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 542277322D90638800751DD9 /* ClassifiedApp */;
+		};
 		5494DBF72D8AF57800317DC4 /* Exceptions for "ClassifiedCoreKit" folder in "ClassifiedCoreKit" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			publicHeaders = (
@@ -60,6 +68,14 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		542277342D90638800751DD9 /* ClassifiedApp */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				542277462D90638A00751DD9 /* Exceptions for "ClassifiedApp" folder in "ClassifiedApp" target */,
+			);
+			path = ClassifiedApp;
+			sourceTree = "<group>";
+		};
 		54818F5F2D8990FE00C5F3AF /* ClassifiedList */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = ClassifiedList;
@@ -81,6 +97,13 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		542277302D90638800751DD9 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		54818F5A2D8990FE00C5F3AF /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -113,6 +136,7 @@
 				54818F5F2D8990FE00C5F3AF /* ClassifiedList */,
 				5494DBED2D8AF57800317DC4 /* ClassifiedCoreKit */,
 				5494DC482D8B117600317DC4 /* ClassifiedCoreKitTests */,
+				542277342D90638800751DD9 /* ClassifiedApp */,
 				54818F5E2D8990FE00C5F3AF /* Products */,
 			);
 			sourceTree = "<group>";
@@ -123,6 +147,7 @@
 				54818F5D2D8990FE00C5F3AF /* ClassifiedList.app */,
 				5494DBEC2D8AF57800317DC4 /* ClassifiedCoreKit.framework */,
 				5494DC472D8B117600317DC4 /* ClassifiedCoreKitTests.xctest */,
+				542277332D90638800751DD9 /* ClassifiedApp.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -140,6 +165,28 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
+		542277322D90638800751DD9 /* ClassifiedApp */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 542277472D90638A00751DD9 /* Build configuration list for PBXNativeTarget "ClassifiedApp" */;
+			buildPhases = (
+				5422772F2D90638800751DD9 /* Sources */,
+				542277302D90638800751DD9 /* Frameworks */,
+				542277312D90638800751DD9 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				542277342D90638800751DD9 /* ClassifiedApp */,
+			);
+			name = ClassifiedApp;
+			packageProductDependencies = (
+			);
+			productName = ClassifiedApp;
+			productReference = 542277332D90638800751DD9 /* ClassifiedApp.app */;
+			productType = "com.apple.product-type.application";
+		};
 		54818F5C2D8990FE00C5F3AF /* ClassifiedList */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 54818F6C2D89910100C5F3AF /* Build configuration list for PBXNativeTarget "ClassifiedList" */;
@@ -220,6 +267,9 @@
 				LastSwiftUpdateCheck = 1620;
 				LastUpgradeCheck = 1620;
 				TargetAttributes = {
+					542277322D90638800751DD9 = {
+						CreatedOnToolsVersion = 16.2;
+					};
 					54818F5C2D8990FE00C5F3AF = {
 						CreatedOnToolsVersion = 16.2;
 					};
@@ -249,11 +299,19 @@
 				54818F5C2D8990FE00C5F3AF /* ClassifiedList */,
 				5494DBEB2D8AF57800317DC4 /* ClassifiedCoreKit */,
 				5494DC462D8B117600317DC4 /* ClassifiedCoreKitTests */,
+				542277322D90638800751DD9 /* ClassifiedApp */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		542277312D90638800751DD9 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		54818F5B2D8990FE00C5F3AF /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -278,6 +336,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		5422772F2D90638800751DD9 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		54818F592D8990FE00C5F3AF /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -315,6 +380,65 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		542277442D90638A00751DD9 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ClassifiedApp/Info.plist;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
+				INFOPLIST_KEY_UIMainStoryboardFile = "";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = co.latdevs.ClassifiedApp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		542277452D90638A00751DD9 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ClassifiedApp/Info.plist;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
+				INFOPLIST_KEY_UIMainStoryboardFile = "";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = co.latdevs.ClassifiedApp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 		54818F6A2D89910100C5F3AF /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -620,6 +744,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		542277472D90638A00751DD9 /* Build configuration list for PBXNativeTarget "ClassifiedApp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				542277442D90638A00751DD9 /* Debug */,
+				542277452D90638A00751DD9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		54818F582D8990FE00C5F3AF /* Build configuration list for PBXProject "ClassifiedList" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
