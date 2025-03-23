@@ -89,7 +89,6 @@ final class ClassifiedAdArrayExtensionsTests: XCTestCase {
         let sortedAds = sampleAds.sortedByDateAndUrgency()
         
         // Then
-        // Check that urgent items are first, regardless of date
         XCTAssertEqual(sortedAds.count, 5)
         XCTAssertTrue(sortedAds[0].isUrgent)
         XCTAssertTrue(sortedAds[1].isUrgent)
@@ -97,11 +96,9 @@ final class ClassifiedAdArrayExtensionsTests: XCTestCase {
         XCTAssertFalse(sortedAds[3].isUrgent)
         XCTAssertFalse(sortedAds[4].isUrgent)
         
-        // Within urgent items, should be sorted by date descending
         XCTAssertEqual(sortedAds[0].id, 5) // Urgent shoes (Jan 3)
         XCTAssertEqual(sortedAds[1].id, 3) // Urgent car (Jan 1)
         
-        // Non-urgent items should be sorted by date descending
         XCTAssertEqual(sortedAds[2].id, 2) // Dress (Jan 10)
         XCTAssertEqual(sortedAds[3].id, 4) // Table (Jan 7)
         XCTAssertEqual(sortedAds[4].id, 1) // Car (Jan 5)
