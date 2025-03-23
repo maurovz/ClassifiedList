@@ -1,5 +1,6 @@
 import Foundation
 import ClassifiedCoreKit
+import UIKit
 
 class ServiceFactory {
     static let shared = ServiceFactory()
@@ -36,5 +37,19 @@ class ServiceFactory {
     
     func createImageLoader() -> CoreImageLoader {
         return CoreImageLoader.shared
+    }
+    
+    // MARK: - View Controllers Factory Methods
+    
+    func createClassifiedListViewController() -> UIViewController {
+        let repository = createClassifiedRepository()
+        let viewModel = ClassifiedListViewModel(repository: repository)
+        let imageLoader = createImageLoader()
+        return ClassifiedListViewController(viewModel: viewModel, imageLoader: imageLoader)
+    }
+    
+    func createClassifiedDetailViewController(classifiedAd: CoreClassifiedAd, categoryName: String) -> UIViewController {
+        let imageLoader = createImageLoader()
+        return ClassifiedDetailViewController(classifiedAd: classifiedAd, categoryName: categoryName, imageLoader: imageLoader)
     }
 }

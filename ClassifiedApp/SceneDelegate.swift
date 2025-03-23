@@ -7,12 +7,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         guard let windowScene = (scene as? UIWindowScene) else { return }
         window = UIWindow(windowScene: windowScene)
         
-        let factory = ServiceFactory.shared
-        let repository = factory.createClassifiedRepository()
-        let imageLoader = factory.createImageLoader()
-        
-        let viewModel = ClassifiedListViewModel(repository: repository)
-        let viewController = ClassifiedListViewController(viewModel: viewModel, imageLoader: imageLoader)
+        let viewController = ServiceFactory.shared.createClassifiedListViewController()
         let navigationController = UINavigationController(rootViewController: viewController)
         
         window?.rootViewController = navigationController

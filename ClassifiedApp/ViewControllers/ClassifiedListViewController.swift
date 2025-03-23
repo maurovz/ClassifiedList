@@ -197,13 +197,14 @@ extension ClassifiedListViewController: UICollectionViewDataSource {
 // MARK: - UICollectionViewDelegate
 extension ClassifiedListViewController: UICollectionViewDelegate {
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        collectionView.deselectItem(at: indexPath, animated: true)
+        
         let ad = viewModel.filteredAds[indexPath.item]
         let categoryName = viewModel.getCategoryName(for: ad.categoryId)
         
-        let detailVC = ClassifiedDetailViewController(
+        let detailVC = ServiceFactory.shared.createClassifiedDetailViewController(
             classifiedAd: ad,
-            categoryName: categoryName,
-            imageLoader: imageLoader
+            categoryName: categoryName
         )
         navigationController?.pushViewController(detailVC, animated: true)
     }
