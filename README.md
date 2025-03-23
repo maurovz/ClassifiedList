@@ -53,6 +53,35 @@ The main iOS application organized in layers:
 - Protocol-oriented programming
 - Dependency injection for testability
 
+## Testing Strategy
+
+The project includes a comprehensive test suite that validates various aspects of the application:
+
+### 1. Model Parsing Tests
+
+The `ModelParsingTests` and `ModelParsingEdgeCasesTests` classes verify that the application correctly parses data from the API endpoints:
+
+- **Basic Parsing Validation**: Tests that JSON responses from both the Categories and Classified ads endpoints are correctly converted to model objects, with all properties properly mapped.
+
+- **Edge Case Handling**: Tests for robustness when dealing with problematic data such as:
+  - Missing optional fields (e.g., siret)
+  - Empty strings
+  - Null image URLs
+  - Invalid date formats
+  - Zero or decimal price values
+
+- **Formatter Logic Testing**: Verifies that helper methods like `formattedPrice` and `formattedDate` correctly format data for display.
+
+- **Error Handling**: Ensures the application gracefully handles invalid or malformed JSON responses.
+
+These tests are critical for maintaining API contract integrity and preventing common runtime crashes resulting from unexpected data formats. They serve as an early warning system if the API contract changes and provide documentation for expected data structures.
+
+### 2. Additional Tests (Coming Soon)
+
+- Repository Layer Tests
+- Business Logic Tests (sorting/filtering)
+- UI Interaction Tests
+
 ## Development Process
 
 Using GitFlow with the following branches:
