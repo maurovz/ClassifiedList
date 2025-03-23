@@ -41,7 +41,14 @@ class ListingsDataSource: NSObject, UICollectionViewDataSource, UICollectionView
         let ad = viewModel.filteredAds[indexPath.item]
         let categoryName = viewModel.getCategoryName(for: ad.categoryId)
         
-        delegate?.listingsDataSource(self, didSelectAd: ad, withCategoryName: categoryName)
+        // Ensure the delegate exists before calling
+        guard let delegate = delegate else {
+            print("Error: ListingsDataSource delegate is nil")
+            return
+        }
+        
+        // Call the delegate method which should navigate to the detail screen
+        delegate.listingsDataSource(self, didSelectAd: ad, withCategoryName: categoryName)
     }
     
     // MARK: - UICollectionViewDelegateFlowLayout

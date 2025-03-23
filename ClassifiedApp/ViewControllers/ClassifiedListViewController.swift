@@ -77,6 +77,14 @@ class ClassifiedListViewController: UIViewController {
         )
         self.imageLoader = imageLoader
         self.coordinator = coordinator
+        
+        // Debug the coordinator status
+        if let coord = coordinator {
+            print("Coordinator successfully initialized: \(type(of: coord))")
+        } else {
+            print("Warning: Initializing ClassifiedListViewController with nil coordinator")
+        }
+        
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -222,6 +230,10 @@ extension ClassifiedListViewController: CategoriesDataSourceDelegate {
 // MARK: - ListingsDataSourceDelegate
 extension ClassifiedListViewController: ListingsDataSourceDelegate {
     func listingsDataSource(_ dataSource: ListingsDataSource, didSelectAd ad: CoreClassifiedAd, withCategoryName categoryName: String) {
+        if coordinator == nil {
+            print("Error: coordinator is nil, navigation won't work")
+        }
+        
         coordinator?.showDetail(for: ad, categoryName: categoryName)
     }
 }

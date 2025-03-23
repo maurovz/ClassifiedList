@@ -11,10 +11,16 @@ class DefaultClassifiedListCoordinator: ClassifiedListCoordinator {
     }
     
     func showDetail(for ad: CoreClassifiedAd, categoryName: String) {
+        print("Coordinator: Showing detail for ad: \(ad.title)")
+        
         let detailVC = serviceFactory.createClassifiedDetailViewController(
             classifiedAd: ad,
             categoryName: categoryName
         )
         navigationController?.pushViewController(detailVC, animated: true)
+        
+        if navigationController == nil {
+            print("Error: navigationController is nil in coordinator")
+        }
     }
 } 

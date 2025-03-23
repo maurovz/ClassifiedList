@@ -58,8 +58,18 @@ class ServiceFactory {
         let repository = createClassifiedRepository()
         let viewModel = ClassifiedListViewModel(repository: repository)
         let imageLoader = createImageLoader()
+        
+        // Create coordinator and explicitly pass the navigation controller
         let coordinator = createClassifiedListCoordinator(navigationController: navigationController)
-        return ClassifiedListViewController(viewModel: viewModel, imageLoader: imageLoader, coordinator: coordinator)
+        
+        // Create view controller with explicit coordinator
+        let viewController = ClassifiedListViewController(
+            viewModel: viewModel,
+            imageLoader: imageLoader,
+            coordinator: coordinator
+        )
+        
+        return viewController
     }
     
     func createClassifiedDetailViewController(classifiedAd: CoreClassifiedAd, categoryName: String) -> UIViewController {
