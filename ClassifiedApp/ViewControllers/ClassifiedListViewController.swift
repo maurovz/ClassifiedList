@@ -112,12 +112,10 @@ class ClassifiedListViewController: UIViewController {
     }
     
     private func configureCollectionViews() {
-        // Configure main collection view
         collectionView.register(ClassifiedAdCell.self, forCellWithReuseIdentifier: ClassifiedAdCell.reuseIdentifier)
         collectionView.dataSource = self
         collectionView.delegate = self
         
-        // Configure category collection view
         categoryCollectionView.register(CategoryCell.self, forCellWithReuseIdentifier: CategoryCell.reuseIdentifier)
         categoryCollectionView.dataSource = self
         categoryCollectionView.delegate = self
@@ -190,28 +188,23 @@ class ClassifiedListViewController: UIViewController {
 extension ClassifiedListViewController: UICollectionViewDataSource {
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         if collectionView.tag == 1 {
-            // Category collection view
             return viewModel.categories.count
         } else {
-            // Main collection view
             return viewModel.filteredAds.count
         }
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         if collectionView.tag == 1 {
-            // Category collection view
             guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: CategoryCell.reuseIdentifier, for: indexPath) as? CategoryCell else {
                 return UICollectionViewCell()
             }
             
             let category = viewModel.categories[indexPath.item]
-            // Don't show dot after the last category
             let showDot = indexPath.item < viewModel.categories.count - 1
             cell.configure(with: category, showDot: showDot)
             return cell
         } else {
-            // Main collection view
             guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: ClassifiedAdCell.reuseIdentifier, for: indexPath) as? ClassifiedAdCell else {
                 return UICollectionViewCell()
             }
@@ -251,21 +244,16 @@ extension ClassifiedListViewController: UICollectionViewDelegate {
 extension ClassifiedListViewController: UICollectionViewDelegateFlowLayout {
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         if collectionView.tag == 1 {
-            // Category collection view - size cells based on content
             let category = viewModel.categories[indexPath.item]
             let font = UIFont.systemFont(ofSize: 16)
             
-            // Calculate text width with additional safety padding
             let textWidth = category.name.size(withAttributes: [.font: font]).width
             
-            // More generous padding (20 points) to ensure text is fully visible even for longer words
             let padding: CGFloat = 20.0
             
-            // Add space for dot separator (except for last item)
             let dotSpace: CGFloat = indexPath.item < viewModel.categories.count - 1 ? 16 : 0
             return CGSize(width: textWidth + dotSpace + padding, height: 44)
         } else {
-            // Main collection view
             let width = collectionView.bounds.width - 32  // 16 points padding on each side
             return CGSize(width: width, height: 200)
         }
@@ -291,7 +279,7 @@ class CategoryCell: UICollectionViewCell {
         label.font = UIFont.systemFont(ofSize: 16)
         label.translatesAutoresizingMaskIntoConstraints = false
         label.textColor = .systemGray
-        // Hide by default, will be shown as needed
+
         label.isHidden = true
         return label
     }()
