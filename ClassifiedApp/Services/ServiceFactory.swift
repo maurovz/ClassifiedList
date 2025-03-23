@@ -2,11 +2,8 @@ import Foundation
 import ClassifiedCoreKit
 
 class ServiceFactory {
-    
-    // Singleton instance for convenient access
     static let shared = ServiceFactory()
     
-    // Private init for singleton
     private init() {}
     
     // MARK: - Factory Methods
@@ -20,7 +17,6 @@ class ServiceFactory {
     }
     
     func createAPIClient() -> CoreAPIClient {
-        // Use a do-catch block to handle the potentially throwing initializer
         do {
             let cacheManager = try createCacheManager()
             return CoreAPIClient(cache: cacheManager)
@@ -41,4 +37,4 @@ class ServiceFactory {
     func createImageLoader() -> CoreImageLoader {
         return CoreImageLoader.shared
     }
-} 
+}

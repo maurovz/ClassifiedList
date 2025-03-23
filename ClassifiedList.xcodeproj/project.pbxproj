@@ -39,11 +39,6 @@
 			path = ClassifiedApp;
 			sourceTree = "<group>";
 		};
-		54818F5F2D8990FE00C5F3AF /* ClassifiedList */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = ClassifiedList;
-			sourceTree = "<group>";
-		};
 		5494DBED2D8AF57800317DC4 /* ClassifiedCoreKit */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
@@ -88,7 +83,6 @@
 			isa = PBXGroup;
 			children = (
 				5494DC522D8B177100317DC4 /* ClassifiedCoreKitTests.xctestplan */,
-				54818F5F2D8990FE00C5F3AF /* ClassifiedList */,
 				5494DBED2D8AF57800317DC4 /* ClassifiedCoreKit */,
 				5494DC482D8B117600317DC4 /* ClassifiedCoreKitTests */,
 				542277342D90638800751DD9 /* ClassifiedApp */,

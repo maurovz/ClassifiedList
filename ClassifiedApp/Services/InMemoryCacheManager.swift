@@ -1,7 +1,6 @@
 import Foundation
 import ClassifiedCoreKit
 
-/// A simple in-memory implementation of CacheManagerProtocol for when file-based caching fails
 final class InMemoryCacheManager: CoreCacheManagerProtocol {
     private let memoryCache = NSCache<NSString, NSData>()
     
@@ -35,4 +34,4 @@ final class InMemoryCacheManager: CoreCacheManagerProtocol {
     func clearCache() throws {
         memoryCache.removeAllObjects()
     }
-} 
+}

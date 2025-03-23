@@ -1,0 +1,23 @@
+We have this project for a test, we need to build it following this instructions. Remember always to use iOS 14 API's
+
+Display a list of classified ads based on two API's endpoints:
+- Categories https://raw.githubusercontent.com/leboncoin/paperclip/master/categories.json
+- Classified https://raw.githubusercontent.com/leboncoin/paperclip/master/listing.json
+
+-Every item should have at least: - an image - a category - a title - a price - an element indicating if it's qualified as urgent
+
+-Items must be sorted by date. Warning: urgent items should be on top of list.
+-A filter element to display a category's items.
+-A tap on item must display a detailed screen displaying all informations given by the listing API
+
+Expectations:
+
+Universal application.
+iOS 14 minimum.
+100% Swift code.
+No external libraries.
+Architecture that respects the single responsability principles.
+UI created in code with auto-layout only. No storyboard / No xib / No SwiftUI.
+A versionned project in Git: - Hosted on a public plateform (Github / Bitbucket) - No zip - Executable on main branch directly
+
+Our attention will also be focused on the following points: - Unit tests - UX & UI - Performances
