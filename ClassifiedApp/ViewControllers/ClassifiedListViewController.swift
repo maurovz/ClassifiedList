@@ -22,9 +22,17 @@ class ClassifiedListViewController: UIViewController {
         return collectionView
     }()
     
-    private let categoryFilterControl: UISegmentedControl = {
-        let control = UISegmentedControl()
-        return control
+    private let categoryCollectionView: UICollectionView = {
+        let layout = UICollectionViewFlowLayout()
+        layout.scrollDirection = .horizontal
+        layout.minimumInteritemSpacing = 4
+        layout.minimumLineSpacing = 4
+        layout.sectionInset = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
+        
+        let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
+        collectionView.backgroundColor = .systemBackground
+        collectionView.showsHorizontalScrollIndicator = false
+        return collectionView
     }()
     
     private let activityIndicator: UIActivityIndicatorView = {
@@ -63,7 +71,7 @@ class ClassifiedListViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
-        configureCollectionView()
+        configureCollectionViews()
         setupBindings()
         loadData()
         
@@ -74,20 +82,21 @@ class ClassifiedListViewController: UIViewController {
     private func setupUI() {
         view.backgroundColor = .systemBackground
         
-        view.addSubview(categoryFilterControl)
+        view.addSubview(categoryCollectionView)
         view.addSubview(collectionView)
         view.addSubview(activityIndicator)
         view.addSubview(errorLabel)
         
         // Using your UIView+Layout extension
-        categoryFilterControl.anchor(
+        categoryCollectionView.anchor(
             top: view.safeAreaLayoutGuide.topAnchor, paddingTop: 8,
-            left: view.leadingAnchor, paddingLeft: 16,
-            right: view.trailingAnchor, paddingRight: 16
+            left: view.leadingAnchor,
+            right: view.trailingAnchor,
+            height: 44
         )
         
         collectionView.anchor(
-            top: categoryFilterControl.bottomAnchor, paddingTop: 8,
+            top: categoryCollectionView.bottomAnchor, paddingTop: 8,
             left: view.leadingAnchor,
             bottom: view.bottomAnchor,
             right: view.trailingAnchor
@@ -100,14 +109,19 @@ class ClassifiedListViewController: UIViewController {
             right: view.trailingAnchor, paddingRight: 32
         )
         errorLabel.centerY(inView: view)
-        
-        categoryFilterControl.addTarget(self, action: #selector(categoryFilterChanged), for: .valueChanged)
     }
     
-    private func configureCollectionView() {
+    private func configureCollectionViews() {
+        // Configure main collection view
         collectionView.register(ClassifiedAdCell.self, forCellWithReuseIdentifier: ClassifiedAdCell.reuseIdentifier)
         collectionView.dataSource = self
         collectionView.delegate = self
+        
+        // Configure category collection view
+        categoryCollectionView.register(CategoryCell.self, forCellWithReuseIdentifier: CategoryCell.reuseIdentifier)
+        categoryCollectionView.dataSource = self
+        categoryCollectionView.delegate = self
+        categoryCollectionView.tag = 1 // Tag to differentiate from main collection view
     }
     
     private func setupBindings() {
@@ -153,22 +167,19 @@ class ClassifiedListViewController: UIViewController {
     }
     
     private func updateCategoryFilter() {
-        categoryFilterControl.removeAllSegments()
-        
-        for (index, category) in viewModel.categories.enumerated() {
-            categoryFilterControl.insertSegment(withTitle: category.name, at: index, animated: false)
-        }
-        
+        categoryCollectionView.reloadData()
+        // Select the first category by default
         if viewModel.categories.isNotEmpty {
-            categoryFilterControl.selectedSegmentIndex = 0
+            let indexPath = IndexPath(item: 0, section: 0)
+            categoryCollectionView.selectItem(at: indexPath, animated: false, scrollPosition: .left)
+            categoryFilterChanged(indexPath)
         }
     }
     
-    @objc private func categoryFilterChanged() {
-        let selectedIndex = categoryFilterControl.selectedSegmentIndex
-        guard selectedIndex >= 0 && selectedIndex < viewModel.categories.count else { return }
+    private func categoryFilterChanged(_ indexPath: IndexPath) {
+        guard indexPath.item >= 0 && indexPath.item < viewModel.categories.count else { return }
         
-        let selectedCategory = viewModel.categories[selectedIndex]
+        let selectedCategory = viewModel.categories[indexPath.item]
         selectedCategoryId = selectedCategory.id
         
         viewModel.filterAds(by: selectedCategoryId)
@@ -178,43 +189,161 @@ class ClassifiedListViewController: UIViewController {
 // MARK: - UICollectionViewDataSource
 extension ClassifiedListViewController: UICollectionViewDataSource {
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return viewModel.filteredAds.count
+        if collectionView.tag == 1 {
+            // Category collection view
+            return viewModel.categories.count
+        } else {
+            // Main collection view
+            return viewModel.filteredAds.count
+        }
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: ClassifiedAdCell.reuseIdentifier, for: indexPath) as? ClassifiedAdCell else {
-            return UICollectionViewCell()
+        if collectionView.tag == 1 {
+            // Category collection view
+            guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: CategoryCell.reuseIdentifier, for: indexPath) as? CategoryCell else {
+                return UICollectionViewCell()
+            }
+            
+            let category = viewModel.categories[indexPath.item]
+            // Don't show dot after the last category
+            let showDot = indexPath.item < viewModel.categories.count - 1
+            cell.configure(with: category, showDot: showDot)
+            return cell
+        } else {
+            // Main collection view
+            guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: ClassifiedAdCell.reuseIdentifier, for: indexPath) as? ClassifiedAdCell else {
+                return UICollectionViewCell()
+            }
+            
+            let ad = viewModel.filteredAds[indexPath.item]
+            let categoryName = viewModel.getCategoryName(for: ad.categoryId)
+            
+            cell.configure(with: ad, categoryName: categoryName, imageLoader: imageLoader)
+            return cell
         }
-        
-        let ad = viewModel.filteredAds[indexPath.item]
-        let categoryName = viewModel.getCategoryName(for: ad.categoryId)
-        
-        cell.configure(with: ad, categoryName: categoryName, imageLoader: imageLoader)
-        return cell
     }
 }
 
 // MARK: - UICollectionViewDelegate
 extension ClassifiedListViewController: UICollectionViewDelegate {
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        collectionView.deselectItem(at: indexPath, animated: true)
-        
-        let ad = viewModel.filteredAds[indexPath.item]
-        let categoryName = viewModel.getCategoryName(for: ad.categoryId)
-        
-        let detailVC = ServiceFactory.shared.createClassifiedDetailViewController(
-            classifiedAd: ad,
-            categoryName: categoryName
-        )
-        navigationController?.pushViewController(detailVC, animated: true)
+        if collectionView.tag == 1 {
+            // Category collection view
+            categoryFilterChanged(indexPath)
+        } else {
+            // Main collection view
+            collectionView.deselectItem(at: indexPath, animated: true)
+            
+            let ad = viewModel.filteredAds[indexPath.item]
+            let categoryName = viewModel.getCategoryName(for: ad.categoryId)
+            
+            let detailVC = ServiceFactory.shared.createClassifiedDetailViewController(
+                classifiedAd: ad,
+                categoryName: categoryName
+            )
+            navigationController?.pushViewController(detailVC, animated: true)
+        }
     }
 }
 
 // MARK: - UICollectionViewDelegateFlowLayout
 extension ClassifiedListViewController: UICollectionViewDelegateFlowLayout {
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        let width = collectionView.bounds.width - 32  // 16 points padding on each side
-        return CGSize(width: width, height: 200)
+        if collectionView.tag == 1 {
+            // Category collection view - size cells based on content
+            let category = viewModel.categories[indexPath.item]
+            let font = UIFont.systemFont(ofSize: 16)
+            
+            // Calculate text width with additional safety padding
+            let textWidth = category.name.size(withAttributes: [.font: font]).width
+            
+            // More generous padding (20 points) to ensure text is fully visible even for longer words
+            let padding: CGFloat = 20.0
+            
+            // Add space for dot separator (except for last item)
+            let dotSpace: CGFloat = indexPath.item < viewModel.categories.count - 1 ? 16 : 0
+            return CGSize(width: textWidth + dotSpace + padding, height: 44)
+        } else {
+            // Main collection view
+            let width = collectionView.bounds.width - 32  // 16 points padding on each side
+            return CGSize(width: width, height: 200)
+        }
+    }
+}
+
+// MARK: - Category Cell
+class CategoryCell: UICollectionViewCell {
+    static let reuseIdentifier = "CategoryCell"
+    
+    private let titleLabel: UILabel = {
+        let label = UILabel()
+        label.textAlignment = .center
+        label.font = UIFont.systemFont(ofSize: 16)
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
+    private let dotSeparator: UILabel = {
+        let label = UILabel()
+        label.text = "•"
+        label.textAlignment = .center
+        label.font = UIFont.systemFont(ofSize: 16)
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.textColor = .systemGray
+        // Hide by default, will be shown as needed
+        label.isHidden = true
+        return label
+    }()
+    
+    override var isSelected: Bool {
+        didSet {
+            updateAppearance()
+        }
+    }
+    
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        setupUI()
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    private func setupUI() {
+        backgroundColor = .clear
+        
+        contentView.addSubview(titleLabel)
+        contentView.addSubview(dotSeparator)
+        
+        NSLayoutConstraint.activate([
+            titleLabel.topAnchor.constraint(equalTo: contentView.topAnchor),
+            titleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            titleLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+            
+            dotSeparator.leadingAnchor.constraint(equalTo: titleLabel.trailingAnchor, constant: 8),
+            dotSeparator.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            dotSeparator.centerYAnchor.constraint(equalTo: titleLabel.centerYAnchor),
+            dotSeparator.widthAnchor.constraint(equalToConstant: 8)
+        ])
+        
+        updateAppearance()
+    }
+    
+    private func updateAppearance() {
+        if isSelected {
+            titleLabel.textColor = .systemBlue
+            titleLabel.font = UIFont.boldSystemFont(ofSize: 16)
+        } else {
+            titleLabel.textColor = .label
+            titleLabel.font = UIFont.systemFont(ofSize: 16)
+        }
+    }
+    
+    func configure(with category: ClassifiedCoreKit.Category, showDot: Bool = true) {
+        titleLabel.text = category.name
+        dotSeparator.isHidden = !showDot
     }
 }
 

@@ -164,7 +164,6 @@ class ClassifiedAdCell: UICollectionViewCell {
     }
     
     private func loadImage(from url: URL?) {
-        // Reset image for reused cells
         adImageView.image = nil
         
         guard let url = url else {
@@ -192,6 +191,5 @@ class ClassifiedAdCell: UICollectionViewCell {
         categoryLabel.text = nil
         dateLabel.text = nil
         urgentBadge.isHidden = true
-        // Don't set imageLoader to nil here, as it's a dependency
     }
 } 
