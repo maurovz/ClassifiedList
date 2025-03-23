@@ -164,7 +164,6 @@ class ClassifiedDetailViewController: UIViewController {
             contentView.addSubview(siretValueLabel)
         }
         
-        // Setup constraints using UIView+Layout extension
         scrollView.anchor(
             top: view.safeAreaLayoutGuide.topAnchor,
             left: view.leadingAnchor,
@@ -287,7 +286,6 @@ class ClassifiedDetailViewController: UIViewController {
     }
     
     private func loadImage() {
-        // Try to load the small image first, then fall back to thumb
         let imageUrl = classifiedAd.imagesUrl.small ?? classifiedAd.imagesUrl.thumb
         
         guard let url = imageUrl else {

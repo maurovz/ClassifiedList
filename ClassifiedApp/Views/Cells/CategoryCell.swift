@@ -8,7 +8,6 @@ class CategoryCell: UICollectionViewCell {
         let label = UILabel()
         label.textAlignment = .center
         label.font = UIFont.systemFont(ofSize: 16)
-        label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
     
@@ -17,7 +16,6 @@ class CategoryCell: UICollectionViewCell {
         label.text = "•"
         label.textAlignment = .center
         label.font = UIFont.systemFont(ofSize: 16)
-        label.translatesAutoresizingMaskIntoConstraints = false
         label.textColor = .systemGray
         label.isHidden = true
         return label
@@ -44,16 +42,18 @@ class CategoryCell: UICollectionViewCell {
         contentView.addSubview(titleLabel)
         contentView.addSubview(dotSeparator)
         
-        NSLayoutConstraint.activate([
-            titleLabel.topAnchor.constraint(equalTo: contentView.topAnchor),
-            titleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-            titleLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
-            
-            dotSeparator.leadingAnchor.constraint(equalTo: titleLabel.trailingAnchor, constant: 8),
-            dotSeparator.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-            dotSeparator.centerYAnchor.constraint(equalTo: titleLabel.centerYAnchor),
-            dotSeparator.widthAnchor.constraint(equalToConstant: 8)
-        ])
+        titleLabel.anchor(
+            top: contentView.topAnchor,
+            left: contentView.leadingAnchor,
+            bottom: contentView.bottomAnchor
+        )
+        
+        dotSeparator.anchor(
+            left: titleLabel.trailingAnchor, paddingLeft: 8,
+            right: contentView.trailingAnchor,
+            width: 8
+        )
+        dotSeparator.centerY(inView: titleLabel)
         
         updateAppearance()
     }
