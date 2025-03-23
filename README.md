@@ -76,11 +76,31 @@ The `ModelParsingTests` and `ModelParsingEdgeCasesTests` classes verify that the
 
 These tests are critical for maintaining API contract integrity and preventing common runtime crashes resulting from unexpected data formats. They serve as an early warning system if the API contract changes and provide documentation for expected data structures.
 
-### 2. Additional Tests (Coming Soon)
+### 2. Repository Layer Tests
 
-- Repository Layer Tests
-- Business Logic Tests (sorting/filtering)
+The `ClassifiedRepositoryTests` and `ClassifiedAdArrayExtensionsTests` classes test the business logic for fetching, sorting, and filtering classified ads:
+
+- **Repository Functionality Tests**: Validate that the repository layer correctly:
+  - Fetches and caches categories and classified ads
+  - Handles errors appropriately
+  - Returns properly filtered results by category
+  - Sorts data according to business requirements
+
+- **Urgent Items Prioritization**: These tests specifically verify the critical business requirement that urgent items appear at the top of the list, regardless of their date, followed by non-urgent items sorted by date.
+
+- **Category Filtering Tests**: Ensure that filtering by category works correctly, including the special "All Categories" case.
+
+- **Sorting Algorithm Tests**: Verify different sorting options (date descending/ascending, price descending/ascending) work correctly.
+
+- **Cache Behavior**: Tests confirm that the repository properly caches data and returns cached results when appropriate.
+
+These tests are valuable because they validate the core business logic that drives the application's main functionality. They ensure that classified ads are presented to users in the correct order with urgent items prioritized, and that filtering works as expected.
+
+### 3. Additional Tests (Coming Soon)
+
 - UI Interaction Tests
+- Image Loading Tests
+- Network Error Handling Tests
 
 ## Development Process
 
