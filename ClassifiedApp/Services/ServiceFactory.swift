@@ -39,6 +39,12 @@ class ServiceFactory {
         return CoreImageLoader.shared
     }
     
+    // MARK: - Coordinators Factory Methods
+    
+    func createClassifiedListCoordinator(navigationController: UINavigationController) -> ClassifiedListCoordinator {
+        return DefaultClassifiedListCoordinator(navigationController: navigationController, serviceFactory: self)
+    }
+    
     // MARK: - View Controllers Factory Methods
     
     func createClassifiedListViewController() -> UIViewController {
@@ -46,6 +52,14 @@ class ServiceFactory {
         let viewModel = ClassifiedListViewModel(repository: repository)
         let imageLoader = createImageLoader()
         return ClassifiedListViewController(viewModel: viewModel, imageLoader: imageLoader)
+    }
+    
+    func createClassifiedListViewController(navigationController: UINavigationController) -> ClassifiedListViewController {
+        let repository = createClassifiedRepository()
+        let viewModel = ClassifiedListViewModel(repository: repository)
+        let imageLoader = createImageLoader()
+        let coordinator = createClassifiedListCoordinator(navigationController: navigationController)
+        return ClassifiedListViewController(viewModel: viewModel, imageLoader: imageLoader, coordinator: coordinator)
     }
     
     func createClassifiedDetailViewController(classifiedAd: CoreClassifiedAd, categoryName: String) -> UIViewController {

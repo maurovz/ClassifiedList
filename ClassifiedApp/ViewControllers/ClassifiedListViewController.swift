@@ -1,12 +1,18 @@
 import UIKit
 import ClassifiedCoreKit
 
+// MARK: - Navigation Coordinator Protocol
+protocol ClassifiedListCoordinator: AnyObject {
+    func showDetail(for ad: CoreClassifiedAd, categoryName: String)
+}
+
 class ClassifiedListViewController: UIViewController {
     
     // MARK: - Properties
     private let viewModel: ClassifiedListViewModel
     private var selectedCategoryId: Int? = Category.all.id
     private let imageLoader: CoreImageLoader
+    weak var coordinator: ClassifiedListCoordinator?
     
     // MARK: - UI Components
     private let collectionView: UICollectionView = {
@@ -51,11 +57,14 @@ class ClassifiedListViewController: UIViewController {
     }()
     
     // MARK: - Initialization
-    init(viewModel: ClassifiedListViewModel? = nil, imageLoader: CoreImageLoader = CoreImageLoader.shared) {
+    init(viewModel: ClassifiedListViewModel? = nil, 
+         imageLoader: CoreImageLoader = CoreImageLoader.shared,
+         coordinator: ClassifiedListCoordinator? = nil) {
         self.viewModel = viewModel ?? ClassifiedListViewModel(
             repository: ServiceFactory.shared.createClassifiedRepository()
         )
         self.imageLoader = imageLoader
+        self.coordinator = coordinator
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -64,6 +73,7 @@ class ClassifiedListViewController: UIViewController {
             repository: ServiceFactory.shared.createClassifiedRepository()
         )
         self.imageLoader = CoreImageLoader.shared
+        self.coordinator = nil
         super.init(coder: coder)
     }
     
@@ -231,11 +241,8 @@ extension ClassifiedListViewController: UICollectionViewDelegate {
             let ad = viewModel.filteredAds[indexPath.item]
             let categoryName = viewModel.getCategoryName(for: ad.categoryId)
             
-            let detailVC = ServiceFactory.shared.createClassifiedDetailViewController(
-                classifiedAd: ad,
-                categoryName: categoryName
-            )
-            navigationController?.pushViewController(detailVC, animated: true)
+            // Use the coordinator for navigation instead of directly handling it
+            coordinator?.showDetail(for: ad, categoryName: categoryName)
         }
     }
 }
