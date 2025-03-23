@@ -14,10 +14,10 @@ class ClassifiedListViewModel {
     
     // MARK: - Properties
     private let repository: CoreClassifiedRepository
-    
-    private(set) var ads: [CoreClassifiedAd] = []
+    private var allAds: [CoreClassifiedAd] = []
     private(set) var filteredAds: [CoreClassifiedAd] = []
-    private(set) var categories: [CoreCategory] = []
+    private(set) var categories: [ClassifiedCoreKit.Category] = []
+    private(set) var selectedCategoryId: Int? = Category.all.id
     
     var onStateChange: ((State) -> Void)?
     
@@ -28,16 +28,12 @@ class ClassifiedListViewModel {
     
     // MARK: - Public Methods
     func loadCategories() {
-        onStateChange?(.loading)
-        
         repository.getCategories { [weak self] result in
             guard let self = self else { return }
             
             switch result {
-            case .success(var categories):
-                // Add the "All Categories" option
-                categories.insert(CoreCategory.all, at: 0)
-                self.categories = categories
+            case .success(let categories):
+                self.categories = [Category.all] + categories
                 self.onStateChange?(.categoriesLoaded)
                 
             case .failure(let error):
@@ -49,36 +45,54 @@ class ClassifiedListViewModel {
     func loadClassifiedAds() {
         onStateChange?(.loading)
         
-        repository.getClassifiedAds(sortedBy: .urgentFirst) { [weak self] result in
+        repository.getClassifiedAds { [weak self] result in
             guard let self = self else { return }
             
             switch result {
             case .success(let ads):
-                self.ads = ads
-                self.filteredAds = ads
+                self.allAds = ads
+                self.filterAds(by: self.selectedCategoryId)
                 self.onStateChange?(.loaded)
                 
             case .failure(let error):
-                self.onStateChange?(.error("Failed to load ads: \(error.localizedDescription)"))
+                self.onStateChange?(.error("Failed to load classified ads: \(error.localizedDescription)"))
             }
         }
     }
     
     func filterAds(by categoryId: Int?) {
-        if categoryId == CoreCategory.all.id || categoryId == nil {
-            filteredAds = ads
+        self.selectedCategoryId = categoryId
+        
+        if categoryId == Category.all.id {
+            // If "All" category is selected, show all ads but sort urgent ones first
+            filteredAds = sortedAds(allAds)
         } else {
-            filteredAds = ads.filter { $0.categoryId == categoryId }
+            // Filter by category and sort (urgent first)
+            let filtered = allAds.filter { $0.categoryId == categoryId }
+            filteredAds = sortedAds(filtered)
         }
+        
+        // Notify that the data has changed
         onStateChange?(.loaded)
     }
     
     func getCategoryName(for categoryId: Int) -> String {
-        return categories.first(where: { $0.id == categoryId })?.name ?? "Unknown Category"
+        return categories.first(where: { $0.id == categoryId })?.name ?? "Unknown"
     }
     
     func refreshData() {
         loadCategories()
         loadClassifiedAds()
+    }
+    
+    // MARK: - Private Methods
+    private func sortedAds(_ ads: [CoreClassifiedAd]) -> [CoreClassifiedAd] {
+        // Sort by urgency (urgent first) and then by date
+        return ads.sorted { (first, second) -> Bool in
+            if first.isUrgent != second.isUrgent {
+                return first.isUrgent
+            }
+            return first.creationDate > second.creationDate
+        }
     }
 } 
