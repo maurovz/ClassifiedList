@@ -8,16 +8,23 @@ protocol ClassifiedListCoordinator: AnyObject {
 
 class ClassifiedListViewController: UIViewController {
     
-    // MARK: - Constants
-    private enum CollectionViewType: Int {
-        case categories = 1
-        case listings = 2
-    }
-    
     // MARK: - Properties
     private let viewModel: ClassifiedListViewModel
     private let imageLoader: CoreImageLoader
     weak var coordinator: ClassifiedListCoordinator?
+    
+    // MARK: - Data Sources
+    private lazy var categoriesDataSource: CategoriesDataSource = {
+        let dataSource = CategoriesDataSource(viewModel: viewModel)
+        dataSource.delegate = self
+        return dataSource
+    }()
+    
+    private lazy var listingsDataSource: ListingsDataSource = {
+        let dataSource = ListingsDataSource(viewModel: viewModel, imageLoader: imageLoader)
+        dataSource.delegate = self
+        return dataSource
+    }()
     
     // MARK: - UI Components
     private let listingsCollectionView: UICollectionView = {
@@ -30,7 +37,6 @@ class ClassifiedListViewController: UIViewController {
         let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
         collectionView.backgroundColor = .systemBackground
         collectionView.showsVerticalScrollIndicator = false
-        collectionView.tag = CollectionViewType.listings.rawValue
         return collectionView
     }()
     
@@ -44,7 +50,6 @@ class ClassifiedListViewController: UIViewController {
         let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
         collectionView.backgroundColor = .systemBackground
         collectionView.showsHorizontalScrollIndicator = false
-        collectionView.tag = CollectionViewType.categories.rawValue
         return collectionView
     }()
     
@@ -113,7 +118,6 @@ class ClassifiedListViewController: UIViewController {
         view.addSubview(activityIndicator)
         view.addSubview(errorLabel)
         
-        // Using your UIView+Layout extension
         categoriesCollectionView.anchor(
             top: view.safeAreaLayoutGuide.topAnchor, paddingTop: 8,
             left: view.leadingAnchor,
@@ -140,13 +144,13 @@ class ClassifiedListViewController: UIViewController {
     private func configureCollectionViews() {
         // Configure listings collection view
         listingsCollectionView.register(ClassifiedAdCell.self, forCellWithReuseIdentifier: ClassifiedAdCell.reuseIdentifier)
-        listingsCollectionView.dataSource = self
-        listingsCollectionView.delegate = self
+        listingsCollectionView.dataSource = listingsDataSource
+        listingsCollectionView.delegate = listingsDataSource
         
         // Configure categories collection view
         categoriesCollectionView.register(CategoryCell.self, forCellWithReuseIdentifier: CategoryCell.reuseIdentifier)
-        categoriesCollectionView.dataSource = self
-        categoriesCollectionView.delegate = self
+        categoriesCollectionView.dataSource = categoriesDataSource
+        categoriesCollectionView.delegate = categoriesDataSource
     }
     
     private func setupBindings() {
@@ -196,11 +200,11 @@ class ClassifiedListViewController: UIViewController {
         if viewModel.categories.isNotEmpty {
             let indexPath = IndexPath(item: 0, section: 0)
             categoriesCollectionView.selectItem(at: indexPath, animated: false, scrollPosition: .left)
-            categoryFilterChanged(indexPath)
+            selectCategory(at: indexPath)
         }
     }
     
-    private func categoryFilterChanged(_ indexPath: IndexPath) {
+    private func selectCategory(at indexPath: IndexPath) {
         guard indexPath.item >= 0 && indexPath.item < viewModel.categories.count else { return }
         
         let selectedCategory = viewModel.categories[indexPath.item]
@@ -208,92 +212,17 @@ class ClassifiedListViewController: UIViewController {
     }
 }
 
-// MARK: - UICollectionViewDataSource
-extension ClassifiedListViewController: UICollectionViewDataSource {
-    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        guard let type = CollectionViewType(rawValue: collectionView.tag) else { return 0 }
-        
-        switch type {
-        case .categories:
-            return viewModel.categories.count
-        case .listings:
-            return viewModel.filteredAds.count
-        }
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        guard let type = CollectionViewType(rawValue: collectionView.tag) else { 
-            return UICollectionViewCell() 
-        }
-        
-        switch type {
-        case .categories:
-            guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: CategoryCell.reuseIdentifier, for: indexPath) as? CategoryCell else {
-                return UICollectionViewCell()
-            }
-            
-            let category = viewModel.categories[indexPath.item]
-            let showDot = indexPath.item < viewModel.categories.count - 1
-            cell.configure(with: category, showDot: showDot)
-            return cell
-            
-        case .listings:
-            guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: ClassifiedAdCell.reuseIdentifier, for: indexPath) as? ClassifiedAdCell else {
-                return UICollectionViewCell()
-            }
-            
-            let ad = viewModel.filteredAds[indexPath.item]
-            let categoryName = viewModel.getCategoryName(for: ad.categoryId)
-            
-            cell.configure(with: ad, categoryName: categoryName, imageLoader: imageLoader)
-            return cell
-        }
+// MARK: - CategoriesDataSourceDelegate
+extension ClassifiedListViewController: CategoriesDataSourceDelegate {
+    func categoriesDataSource(_ dataSource: CategoriesDataSource, didSelectCategory category: ClassifiedCoreKit.Category) {
+        viewModel.filterAds(by: category.id)
     }
 }
 
-// MARK: - UICollectionViewDelegate
-extension ClassifiedListViewController: UICollectionViewDelegate {
-    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        guard let type = CollectionViewType(rawValue: collectionView.tag) else { return }
-        
-        switch type {
-        case .categories:
-            categoryFilterChanged(indexPath)
-            
-        case .listings:
-            collectionView.deselectItem(at: indexPath, animated: true)
-            
-            let ad = viewModel.filteredAds[indexPath.item]
-            let categoryName = viewModel.getCategoryName(for: ad.categoryId)
-            
-            // Use the coordinator for navigation instead of directly handling it
-            coordinator?.showDetail(for: ad, categoryName: categoryName)
-        }
-    }
-}
-
-// MARK: - UICollectionViewDelegateFlowLayout
-extension ClassifiedListViewController: UICollectionViewDelegateFlowLayout {
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        guard let type = CollectionViewType(rawValue: collectionView.tag) else {
-            return CGSize(width: 100, height: 100) // Default size
-        }
-        
-        switch type {
-        case .categories:
-            let category = viewModel.categories[indexPath.item]
-            let font = UIFont.systemFont(ofSize: 16)
-            
-            let textWidth = category.name.size(withAttributes: [.font: font]).width
-            let padding: CGFloat = 20.0
-            let dotSpace: CGFloat = indexPath.item < viewModel.categories.count - 1 ? 16 : 0
-            
-            return CGSize(width: textWidth + dotSpace + padding, height: 44)
-            
-        case .listings:
-            let width = collectionView.bounds.width - 32
-            return CGSize(width: width, height: 200)
-        }
+// MARK: - ListingsDataSourceDelegate
+extension ClassifiedListViewController: ListingsDataSourceDelegate {
+    func listingsDataSource(_ dataSource: ListingsDataSource, didSelectAd ad: CoreClassifiedAd, withCategoryName categoryName: String) {
+        coordinator?.showDetail(for: ad, categoryName: categoryName)
     }
 }
 
