@@ -84,11 +84,23 @@ class ClassifiedListViewController: UIViewController {
         configureCollectionViews()
         setupBindings()
         loadData()
-        
-        title = "Classified Ads"
+        setupNavigationBar()
     }
     
     // MARK: - Private Methods
+    private func setupNavigationBar() {
+        // Create a UIImageView with the logo
+        let logoImageView = UIImageView(image: UIImage(named: "logo"))
+        logoImageView.contentMode = .scaleAspectFit
+        
+        // Size the image view to fit in the navigation bar
+        let height: CGFloat = 30
+        logoImageView.frame = CGRect(x: 0, y: 0, width: 150, height: height)
+        
+        // Set it as the title view
+        navigationItem.titleView = logoImageView
+    }
+    
     private func setupUI() {
         view.backgroundColor = .systemBackground
         
