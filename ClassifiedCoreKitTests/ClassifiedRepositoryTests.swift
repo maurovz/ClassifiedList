@@ -123,20 +123,16 @@ final class ClassifiedRepositoryTests: XCTestCase {
     }
     
     func testGetCategoriesFromCache() {
-        // Given
         mockService.mockedCategoriesResult = Result<[ClassifiedCoreKit.Category], Error>.success(sampleCategories)
         
-        // First call to populate the cache
         let firstExpectation = XCTestExpectation(description: "First categories fetch")
         sut.getCategories { _ in
             firstExpectation.fulfill()
         }
         wait(for: [firstExpectation], timeout: 1.0)
         
-        // Reset the mock to return an error
         mockService.mockedCategoriesResult = Result<[ClassifiedCoreKit.Category], Error>.failure(NSError(domain: "test", code: 1))
         
-        // When - Second call should use cache
         let secondExpectation = XCTestExpectation(description: "Second categories fetch")
         var receivedCategories: [ClassifiedCoreKit.Category]?
         var receivedError: Error?

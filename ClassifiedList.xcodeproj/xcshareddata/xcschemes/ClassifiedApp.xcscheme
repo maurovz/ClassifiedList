@@ -15,9 +15,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "54818F5C2D8990FE00C5F3AF"
-               BuildableName = "ClassifiedList.app"
-               BlueprintName = "ClassifiedList"
+               BlueprintIdentifier = "542277322D90638800751DD9"
+               BuildableName = "ClassifiedApp.app"
+               BlueprintName = "ClassifiedApp"
                ReferencedContainer = "container:ClassifiedList.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -29,19 +29,6 @@
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       shouldUseLaunchSchemeArgsEnv = "YES"
       shouldAutocreateTestPlan = "YES">
-      <Testables>
-         <TestableReference
-            skipped = "NO"
-            parallelizable = "YES">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "5494DC462D8B117600317DC4"
-               BuildableName = "ClassifiedCoreKitTests.xctest"
-               BlueprintName = "ClassifiedCoreKitTests"
-               ReferencedContainer = "container:ClassifiedList.xcodeproj">
-            </BuildableReference>
-         </TestableReference>
-      </Testables>
    </TestAction>
    <LaunchAction
       buildConfiguration = "Debug"
@@ -63,15 +50,6 @@
             ReferencedContainer = "container:ClassifiedList.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
-      <MacroExpansion>
-         <BuildableReference
-            BuildableIdentifier = "primary"
-            BlueprintIdentifier = "54818F5C2D8990FE00C5F3AF"
-            BuildableName = "ClassifiedList.app"
-            BlueprintName = "ClassifiedList"
-            ReferencedContainer = "container:ClassifiedList.xcodeproj">
-         </BuildableReference>
-      </MacroExpansion>
    </LaunchAction>
    <ProfileAction
       buildConfiguration = "Release"
@@ -83,21 +61,12 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "54818F5C2D8990FE00C5F3AF"
-            BuildableName = "ClassifiedList.app"
-            BlueprintName = "ClassifiedList"
+            BlueprintIdentifier = "542277322D90638800751DD9"
+            BuildableName = "ClassifiedApp.app"
+            BlueprintName = "ClassifiedApp"
             ReferencedContainer = "container:ClassifiedList.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
-      <MacroExpansion>
-         <BuildableReference
-            BuildableIdentifier = "primary"
-            BlueprintIdentifier = "54818F5C2D8990FE00C5F3AF"
-            BuildableName = "ClassifiedList.app"
-            BlueprintName = "ClassifiedList"
-            ReferencedContainer = "container:ClassifiedList.xcodeproj">
-         </BuildableReference>
-      </MacroExpansion>
    </ProfileAction>
    <AnalyzeAction
       buildConfiguration = "Debug">

@@ -5,7 +5,7 @@ class ClassifiedAdCell: UICollectionViewCell {
     static let reuseIdentifier = "ClassifiedAdCell"
     
     // MARK: - Properties
-    private var imageLoader: CoreImageLoader?
+    private var imageLoader: ImageLoader?
     
     // MARK: - UI Components
     private let containerView: UIView = {
@@ -97,7 +97,6 @@ class ClassifiedAdCell: UICollectionViewCell {
         containerView.addSubview(urgentBadge)
         urgentBadge.addSubview(urgentLabel)
         
-        // Layout using UIView+Layout
         containerView.anchor(
             top: contentView.topAnchor, paddingTop: 4,
             left: contentView.leadingAnchor, paddingLeft: 4,
@@ -150,7 +149,7 @@ class ClassifiedAdCell: UICollectionViewCell {
     }
     
     // MARK: - Configuration
-    func configure(with ad: CoreClassifiedAd, categoryName: String, imageLoader: CoreImageLoader = CoreImageLoader.shared) {
+    func configure(with ad: CoreClassifiedAd, categoryName: String, imageLoader: ImageLoader = ImageLoader.shared) {
         self.imageLoader = imageLoader
         
         titleLabel.text = ad.title
@@ -164,7 +163,6 @@ class ClassifiedAdCell: UICollectionViewCell {
     }
     
     private func loadImage(from url: URL?) {
-        // Reset image for reused cells
         adImageView.image = nil
         
         guard let url = url else {
@@ -192,6 +190,5 @@ class ClassifiedAdCell: UICollectionViewCell {
         categoryLabel.text = nil
         dateLabel.text = nil
         urgentBadge.isHidden = true
-        // Don't set imageLoader to nil here, as it's a dependency
     }
 } 

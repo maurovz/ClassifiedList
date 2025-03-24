@@ -9,10 +9,19 @@
 /* Begin PBXBuildFile section */
 		542277A72D90956700751DD9 /* ClassifiedCoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5494DBEC2D8AF57800317DC4 /* ClassifiedCoreKit.framework */; };
 		542277A82D90956700751DD9 /* ClassifiedCoreKit.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 5494DBEC2D8AF57800317DC4 /* ClassifiedCoreKit.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		5422783D2D90E00600751DD9 /* ClassifiedCoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5494DBEC2D8AF57800317DC4 /* ClassifiedCoreKit.framework */; };
+		5422783E2D90E00600751DD9 /* ClassifiedCoreKit.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 5494DBEC2D8AF57800317DC4 /* ClassifiedCoreKit.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
 		542277A92D90956700751DD9 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 54818F552D8990FE00C5F3AF /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 5494DBEB2D8AF57800317DC4;
+			remoteInfo = ClassifiedCoreKit;
+		};
+		5422783F2D90E00600751DD9 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 54818F552D8990FE00C5F3AF /* Project object */;
 			proxyType = 1;
@@ -29,6 +38,17 @@
 			dstSubfolderSpec = 10;
 			files = (
 				542277A82D90956700751DD9 /* ClassifiedCoreKit.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		542278412D90E00700751DD9 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				5422783E2D90E00600751DD9 /* ClassifiedCoreKit.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -88,6 +108,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5422783D2D90E00600751DD9 /* ClassifiedCoreKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -109,7 +130,7 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		542277A62D90956700751DD9 /* Frameworks */ = {
+		5422783C2D90E00600751DD9 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
 			);
@@ -123,7 +144,7 @@
 				5494DBED2D8AF57800317DC4 /* ClassifiedCoreKit */,
 				5494DC482D8B117600317DC4 /* ClassifiedCoreKitTests */,
 				542277342D90638800751DD9 /* ClassifiedApp */,
-				542277A62D90956700751DD9 /* Frameworks */,
+				5422783C2D90E00600751DD9 /* Frameworks */,
 				54818F5E2D8990FE00C5F3AF /* Products */,
 			);
 			sourceTree = "<group>";
@@ -158,10 +179,12 @@
 				5422772F2D90638800751DD9 /* Sources */,
 				542277302D90638800751DD9 /* Frameworks */,
 				542277312D90638800751DD9 /* Resources */,
+				542278412D90E00700751DD9 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				542278402D90E00600751DD9 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				542277342D90638800751DD9 /* ClassifiedApp */,
@@ -315,6 +338,11 @@
 			isa = PBXTargetDependency;
 			target = 5494DBEB2D8AF57800317DC4 /* ClassifiedCoreKit */;
 			targetProxy = 542277A92D90956700751DD9 /* PBXContainerItemProxy */;
+		};
+		542278402D90E00600751DD9 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 5494DBEB2D8AF57800317DC4 /* ClassifiedCoreKit */;
+			targetProxy = 5422783F2D90E00600751DD9 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 

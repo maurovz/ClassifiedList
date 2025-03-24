@@ -1,15 +1,33 @@
 import UIKit
 import ClassifiedCoreKit
 
+// MARK: - Navigation Coordinator Protocol
+protocol ClassifiedListCoordinator: AnyObject {
+    func showDetail(for ad: CoreClassifiedAd, categoryName: String)
+}
+
 class ClassifiedListViewController: UIViewController {
     
     // MARK: - Properties
     private let viewModel: ClassifiedListViewModel
-    private var selectedCategoryId: Int? = Category.all.id
-    private let imageLoader: CoreImageLoader
+    private let imageLoader: ImageLoader
+    weak var coordinator: ClassifiedListCoordinator?
+    
+    // MARK: - Data Sources
+    private lazy var categoriesDataSource: CategoriesDataSource = {
+        let dataSource = CategoriesDataSource(viewModel: viewModel)
+        dataSource.delegate = self
+        return dataSource
+    }()
+    
+    private lazy var listingsDataSource: ListingsDataSource = {
+        let dataSource = ListingsDataSource(viewModel: viewModel, imageLoader: imageLoader)
+        dataSource.delegate = self
+        return dataSource
+    }()
     
     // MARK: - UI Components
-    private let collectionView: UICollectionView = {
+    private let listingsCollectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
         layout.scrollDirection = .vertical
         layout.minimumLineSpacing = 16
@@ -22,9 +40,17 @@ class ClassifiedListViewController: UIViewController {
         return collectionView
     }()
     
-    private let categoryFilterControl: UISegmentedControl = {
-        let control = UISegmentedControl()
-        return control
+    private let categoriesCollectionView: UICollectionView = {
+        let layout = UICollectionViewFlowLayout()
+        layout.scrollDirection = .horizontal
+        layout.minimumInteritemSpacing = 4
+        layout.minimumLineSpacing = 4
+        layout.sectionInset = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
+        
+        let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
+        collectionView.backgroundColor = .systemBackground
+        collectionView.showsHorizontalScrollIndicator = false
+        return collectionView
     }()
     
     private let activityIndicator: UIActivityIndicatorView = {
@@ -43,11 +69,15 @@ class ClassifiedListViewController: UIViewController {
     }()
     
     // MARK: - Initialization
-    init(viewModel: ClassifiedListViewModel? = nil, imageLoader: CoreImageLoader = CoreImageLoader.shared) {
+    init(viewModel: ClassifiedListViewModel? = nil, 
+         imageLoader: ImageLoader = ImageLoader.shared,
+         coordinator: ClassifiedListCoordinator? = nil) {
         self.viewModel = viewModel ?? ClassifiedListViewModel(
             repository: ServiceFactory.shared.createClassifiedRepository()
         )
         self.imageLoader = imageLoader
+        self.coordinator = coordinator
+                
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -55,7 +85,8 @@ class ClassifiedListViewController: UIViewController {
         self.viewModel = ClassifiedListViewModel(
             repository: ServiceFactory.shared.createClassifiedRepository()
         )
-        self.imageLoader = CoreImageLoader.shared
+        self.imageLoader = ImageLoader.shared
+        self.coordinator = nil
         super.init(coder: coder)
     }
     
@@ -63,31 +94,40 @@ class ClassifiedListViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
-        configureCollectionView()
+        configureCollectionViews()
         setupBindings()
         loadData()
-        
-        title = "Classified Ads"
+        setupNavigationBar()
     }
     
     // MARK: - Private Methods
+    private func setupNavigationBar() {
+        let logoImageView = UIImageView(image: UIImage(named: "logo"))
+        logoImageView.contentMode = .scaleAspectFit
+        
+        let height: CGFloat = 30
+        logoImageView.frame = CGRect(x: 0, y: 0, width: 150, height: height)
+        
+        navigationItem.titleView = logoImageView
+    }
+    
     private func setupUI() {
         view.backgroundColor = .systemBackground
         
-        view.addSubview(categoryFilterControl)
-        view.addSubview(collectionView)
+        view.addSubview(categoriesCollectionView)
+        view.addSubview(listingsCollectionView)
         view.addSubview(activityIndicator)
         view.addSubview(errorLabel)
         
-        // Using your UIView+Layout extension
-        categoryFilterControl.anchor(
+        categoriesCollectionView.anchor(
             top: view.safeAreaLayoutGuide.topAnchor, paddingTop: 8,
-            left: view.leadingAnchor, paddingLeft: 16,
-            right: view.trailingAnchor, paddingRight: 16
+            left: view.leadingAnchor,
+            right: view.trailingAnchor,
+            height: 44
         )
         
-        collectionView.anchor(
-            top: categoryFilterControl.bottomAnchor, paddingTop: 8,
+        listingsCollectionView.anchor(
+            top: categoriesCollectionView.bottomAnchor, paddingTop: 8,
             left: view.leadingAnchor,
             bottom: view.bottomAnchor,
             right: view.trailingAnchor
@@ -100,14 +140,18 @@ class ClassifiedListViewController: UIViewController {
             right: view.trailingAnchor, paddingRight: 32
         )
         errorLabel.centerY(inView: view)
-        
-        categoryFilterControl.addTarget(self, action: #selector(categoryFilterChanged), for: .valueChanged)
     }
     
-    private func configureCollectionView() {
-        collectionView.register(ClassifiedAdCell.self, forCellWithReuseIdentifier: ClassifiedAdCell.reuseIdentifier)
-        collectionView.dataSource = self
-        collectionView.delegate = self
+    private func configureCollectionViews() {
+        // Configure listings collection view
+        listingsCollectionView.register(ClassifiedAdCell.self, forCellWithReuseIdentifier: ClassifiedAdCell.reuseIdentifier)
+        listingsCollectionView.dataSource = listingsDataSource
+        listingsCollectionView.delegate = listingsDataSource
+        
+        // Configure categories collection view
+        categoriesCollectionView.register(CategoryCell.self, forCellWithReuseIdentifier: CategoryCell.reuseIdentifier)
+        categoriesCollectionView.dataSource = categoriesDataSource
+        categoriesCollectionView.delegate = categoriesDataSource
     }
     
     private func setupBindings() {
@@ -123,24 +167,24 @@ class ClassifiedListViewController: UIViewController {
         case .idle:
             activityIndicator.stopAnimating()
             errorLabel.isHidden = true
-            collectionView.isHidden = false
+            listingsCollectionView.isHidden = false
             
         case .loading:
             activityIndicator.startAnimating()
             errorLabel.isHidden = true
-            collectionView.isHidden = true
+            listingsCollectionView.isHidden = true
             
         case .loaded:
             activityIndicator.stopAnimating()
             errorLabel.isHidden = true
-            collectionView.isHidden = false
-            collectionView.reloadData()
+            listingsCollectionView.isHidden = false
+            listingsCollectionView.reloadData()
             
         case .error(let message):
             activityIndicator.stopAnimating()
             errorLabel.text = message
             errorLabel.isHidden = false
-            collectionView.isHidden = true
+            listingsCollectionView.isHidden = true
             
         case .categoriesLoaded:
             updateCategoryFilter()
@@ -153,68 +197,33 @@ class ClassifiedListViewController: UIViewController {
     }
     
     private func updateCategoryFilter() {
-        categoryFilterControl.removeAllSegments()
-        
-        for (index, category) in viewModel.categories.enumerated() {
-            categoryFilterControl.insertSegment(withTitle: category.name, at: index, animated: false)
-        }
-        
+        categoriesCollectionView.reloadData()
         if viewModel.categories.isNotEmpty {
-            categoryFilterControl.selectedSegmentIndex = 0
+            let indexPath = IndexPath(item: 0, section: 0)
+            categoriesCollectionView.selectItem(at: indexPath, animated: false, scrollPosition: .left)
+            selectCategory(at: indexPath)
         }
     }
     
-    @objc private func categoryFilterChanged() {
-        let selectedIndex = categoryFilterControl.selectedSegmentIndex
-        guard selectedIndex >= 0 && selectedIndex < viewModel.categories.count else { return }
+    private func selectCategory(at indexPath: IndexPath) {
+        guard indexPath.item >= 0 && indexPath.item < viewModel.categories.count else { return }
         
-        let selectedCategory = viewModel.categories[selectedIndex]
-        selectedCategoryId = selectedCategory.id
-        
-        viewModel.filterAds(by: selectedCategoryId)
+        let selectedCategory = viewModel.categories[indexPath.item]
+        viewModel.filterAds(by: selectedCategory.id)
     }
 }
 
-// MARK: - UICollectionViewDataSource
-extension ClassifiedListViewController: UICollectionViewDataSource {
-    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return viewModel.filteredAds.count
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: ClassifiedAdCell.reuseIdentifier, for: indexPath) as? ClassifiedAdCell else {
-            return UICollectionViewCell()
-        }
-        
-        let ad = viewModel.filteredAds[indexPath.item]
-        let categoryName = viewModel.getCategoryName(for: ad.categoryId)
-        
-        cell.configure(with: ad, categoryName: categoryName, imageLoader: imageLoader)
-        return cell
+// MARK: - CategoriesDataSourceDelegate
+extension ClassifiedListViewController: CategoriesDataSourceDelegate {
+    func categoriesDataSource(_ dataSource: CategoriesDataSource, didSelectCategory category: ClassifiedCoreKit.Category) {
+        viewModel.filterAds(by: category.id)
     }
 }
 
-// MARK: - UICollectionViewDelegate
-extension ClassifiedListViewController: UICollectionViewDelegate {
-    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        collectionView.deselectItem(at: indexPath, animated: true)
-        
-        let ad = viewModel.filteredAds[indexPath.item]
-        let categoryName = viewModel.getCategoryName(for: ad.categoryId)
-        
-        let detailVC = ServiceFactory.shared.createClassifiedDetailViewController(
-            classifiedAd: ad,
-            categoryName: categoryName
-        )
-        navigationController?.pushViewController(detailVC, animated: true)
-    }
-}
-
-// MARK: - UICollectionViewDelegateFlowLayout
-extension ClassifiedListViewController: UICollectionViewDelegateFlowLayout {
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        let width = collectionView.bounds.width - 32  // 16 points padding on each side
-        return CGSize(width: width, height: 200)
+// MARK: - ListingsDataSourceDelegate
+extension ClassifiedListViewController: ListingsDataSourceDelegate {
+    func listingsDataSource(_ dataSource: ListingsDataSource, didSelectAd ad: CoreClassifiedAd, withCategoryName categoryName: String) {
+        coordinator?.showDetail(for: ad, categoryName: categoryName)
     }
 }
 

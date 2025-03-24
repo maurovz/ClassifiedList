@@ -6,7 +6,7 @@ class ClassifiedDetailViewController: UIViewController {
     // MARK: - Properties
     private let classifiedAd: CoreClassifiedAd
     private let categoryName: String
-    private let imageLoader: CoreImageLoader
+    private let imageLoader: ImageLoader
     
     // MARK: - UI Components
     private let scrollView: UIScrollView = {
@@ -121,7 +121,7 @@ class ClassifiedDetailViewController: UIViewController {
     }()
     
     // MARK: - Initialization
-    init(classifiedAd: CoreClassifiedAd, categoryName: String, imageLoader: CoreImageLoader = CoreImageLoader.shared) {
+    init(classifiedAd: CoreClassifiedAd, categoryName: String, imageLoader: ImageLoader = ImageLoader.shared) {
         self.classifiedAd = classifiedAd
         self.categoryName = categoryName
         self.imageLoader = imageLoader
@@ -164,7 +164,6 @@ class ClassifiedDetailViewController: UIViewController {
             contentView.addSubview(siretValueLabel)
         }
         
-        // Setup constraints using UIView+Layout extension
         scrollView.anchor(
             top: view.safeAreaLayoutGuide.topAnchor,
             left: view.leadingAnchor,
@@ -287,7 +286,6 @@ class ClassifiedDetailViewController: UIViewController {
     }
     
     private func loadImage() {
-        // Try to load the small image first, then fall back to thumb
         let imageUrl = classifiedAd.imagesUrl.small ?? classifiedAd.imagesUrl.thumb
         
         guard let url = imageUrl else {

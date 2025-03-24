@@ -1,20 +1,13 @@
 import Foundation
-
-#if canImport(UIKit)
 import UIKit
-#endif
 
-#if canImport(AppKit)
-import AppKit
-#endif
-
-public enum ImageLoadingError: Error {
+enum ImageLoadingError: Error {
     case invalidURL
     case networkError(Error)
     case invalidData
     case decodingError
     
-    public var localizedDescription: String {
+    var localizedDescription: String {
         switch self {
         case .invalidURL:
             return "Invalid image URL"
@@ -28,11 +21,11 @@ public enum ImageLoadingError: Error {
     }
 }
 
-public class ImageLoader {
+class ImageLoader {
     private let session: URLSession
     private let cache: NSCache<NSString, AnyObject>
     
-    public static let shared = ImageLoader()
+    static let shared = ImageLoader()
     
     private init(session: URLSession = .shared) {
         self.session = session
@@ -40,8 +33,7 @@ public class ImageLoader {
         self.cache.countLimit = 100
     }
     
-    #if canImport(UIKit)
-    public func loadImage(from url: URL?, completion: @escaping (Result<UIImage, ImageLoadingError>) -> Void) {
+    func loadImage(from url: URL?, completion: @escaping (Result<UIImage, ImageLoadingError>) -> Void) {
         guard let url = url else {
             completion(.failure(.invalidURL))
             return
@@ -77,48 +69,8 @@ public class ImageLoader {
         
         task.resume()
     }
-    #endif
     
-    #if canImport(AppKit)
-    public func loadImage(from url: URL?, completion: @escaping (Result<NSImage, ImageLoadingError>) -> Void) {
-        guard let url = url else {
-            completion(.failure(.invalidURL))
-            return
-        }
-        
-        let key = url.absoluteString as NSString
-        
-        if let cachedImage = cache.object(forKey: key) as? NSImage {
-            completion(.success(cachedImage))
-            return
-        }
-        
-        let task = session.dataTask(with: url) { [weak self] data, response, error in
-            if let error = error {
-                completion(.failure(.networkError(error)))
-                return
-            }
-            
-            guard let data = data, !data.isEmpty else {
-                completion(.failure(.invalidData))
-                return
-            }
-            
-            guard let image = NSImage(data: data) else {
-                completion(.failure(.decodingError))
-                return
-            }
-            
-            self?.cache.setObject(image, forKey: key)
-            
-            completion(.success(image))
-        }
-        
-        task.resume()
-    }
-    #endif
-    
-    public func clearCache() {
+    func clearCache() {
         cache.removeAllObjects()
     }
 } 
