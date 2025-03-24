@@ -78,13 +78,6 @@ class ClassifiedListViewController: UIViewController {
         self.imageLoader = imageLoader
         self.coordinator = coordinator
         
-        // Debug the coordinator status
-        if let coord = coordinator {
-            print("Coordinator successfully initialized: \(type(of: coord))")
-        } else {
-            print("Warning: Initializing ClassifiedListViewController with nil coordinator")
-        }
-        
         super.init(nibName: nil, bundle: nil)
     }
     
