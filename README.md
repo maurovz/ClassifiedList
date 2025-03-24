@@ -4,6 +4,19 @@
 
 A universal iOS application that displays classified ads fetched from an API, with the ability to filter by categories and view detailed information.
 
+## Screenshots & Demo
+
+### Home Screen
+![Home Screen](home_screenshot.png)
+
+### Detail Screen
+![Detail Screen](detail_screenshot.png)
+
+### Demo Video
+Click to watch the demo:
+
+[![Demo Video](home_screenshot.png)](demo.mp4)
+
 ## How to Run
 
 ### Running the App
@@ -17,7 +30,7 @@ A universal iOS application that displays classified ads fetched from an API, wi
 2. Press ⌘U to run tests
 
 See screenshot below for reference:
-![Test Configuration](test-configuration.png)
+![Test Configuration](test_screenshot.png)
 
 ## Architecture
 
