@@ -23,13 +23,6 @@ A universal iOS application that displays classified ads fetched from an API, wi
   </tr>
 </table>
 
-### Demo Video
-Click to watch the demo:
-
-<a href="demo.mp4">
-  <img src="home_screenshot.png" width="300" alt="Demo Video">
-</a>
-
 ## How to Run
 
 ### Running the App
