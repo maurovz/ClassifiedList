@@ -40,7 +40,6 @@ public class ImageLoader {
         self.cache.countLimit = 100
     }
     
-    #if canImport(UIKit)
     public func loadImage(from url: URL?, completion: @escaping (Result<UIImage, ImageLoadingError>) -> Void) {
         guard let url = url else {
             completion(.failure(.invalidURL))
@@ -77,46 +76,6 @@ public class ImageLoader {
         
         task.resume()
     }
-    #endif
-    
-    #if canImport(AppKit)
-    public func loadImage(from url: URL?, completion: @escaping (Result<NSImage, ImageLoadingError>) -> Void) {
-        guard let url = url else {
-            completion(.failure(.invalidURL))
-            return
-        }
-        
-        let key = url.absoluteString as NSString
-        
-        if let cachedImage = cache.object(forKey: key) as? NSImage {
-            completion(.success(cachedImage))
-            return
-        }
-        
-        let task = session.dataTask(with: url) { [weak self] data, response, error in
-            if let error = error {
-                completion(.failure(.networkError(error)))
-                return
-            }
-            
-            guard let data = data, !data.isEmpty else {
-                completion(.failure(.invalidData))
-                return
-            }
-            
-            guard let image = NSImage(data: data) else {
-                completion(.failure(.decodingError))
-                return
-            }
-            
-            self?.cache.setObject(image, forKey: key)
-            
-            completion(.success(image))
-        }
-        
-        task.resume()
-    }
-    #endif
     
     public func clearCache() {
         cache.removeAllObjects()

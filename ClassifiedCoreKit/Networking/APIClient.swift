@@ -164,13 +164,11 @@ public final class APIClient: APIClientProtocol {
             if let nsError = error as NSError?,
                nsError.domain == NSURLErrorDomain,
                [NSURLErrorTimedOut, NSURLErrorNetworkConnectionLost, NSURLErrorNotConnectedToInternet].contains(nsError.code) {
-                // This is a retryable network error, wait before retrying
                 let delay = calculateBackoff(attempt: nextAttempt)
                 
                 DispatchQueue.global().asyncAfter(deadline: .now() + delay) { [weak self] in
                     guard let self = self else { return }
                     
-                    // Check if the task was cancelled during the delay
                     if self.taskCancelled {
                         completion(.failure(APIError.cancelled))
                         return
@@ -188,7 +186,6 @@ public final class APIClient: APIClientProtocol {
             }
         }
         
-        // If we've reached the maximum retry count or the error isn't retryable
         if attemptCount >= endpoint.retryCount {
             completion(.failure(APIError.maxRetryReached))
         } else if let apiError = error as? APIError {

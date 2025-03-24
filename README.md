@@ -4,6 +4,21 @@
 
 A universal iOS application that displays classified ads fetched from an API, with the ability to filter by categories and view detailed information.
 
+## How to Run
+
+### Running the App
+1. Open the Xcode project
+2. Select the `ClassifiedList` target in the scheme selector (this is the default)
+3. Select a device or simulator
+4. Press Run (⌘R)
+
+### Running Tests
+1. To run tests, select the `ClassifiedCoreKitTests` scheme in the scheme selector
+2. Press ⌘U to run tests
+
+See screenshot below for reference:
+![Test Configuration](test-configuration.png)
+
 ## Architecture
 
 The project follows a clean, modular architecture with two main components:
