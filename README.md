@@ -6,16 +6,29 @@ A universal iOS application that displays classified ads fetched from an API, wi
 
 ## Screenshots & Demo
 
-### Home Screen
-![Home Screen](home_screenshot.png)
-
-### Detail Screen
-![Detail Screen](detail_screenshot.png)
+<table>
+  <tr>
+    <td width="50%">
+      <h3 align="center">Home Screen</h3>
+      <p align="center">
+        <img src="home_screenshot.png" width="320" alt="Home Screen">
+      </p>
+    </td>
+    <td width="50%">
+      <h3 align="center">Detail Screen</h3>
+      <p align="center">
+        <img src="detail_screenshot.png" width="320" alt="Detail Screen">
+      </p>
+    </td>
+  </tr>
+</table>
 
 ### Demo Video
 Click to watch the demo:
 
-[![Demo Video](home_screenshot.png)](demo.mp4)
+<a href="demo.mp4">
+  <img src="home_screenshot.png" width="300" alt="Demo Video">
+</a>
 
 ## How to Run
 
@@ -30,7 +43,7 @@ Click to watch the demo:
 2. Press ⌘U to run tests
 
 See screenshot below for reference:
-![Test Configuration](test_screenshot.png)
+<img src="test_screenshot.png" width="600" alt="Test Configuration">
 
 ## Architecture
 
