@@ -6,7 +6,7 @@ class ClassifiedDetailViewController: UIViewController {
     // MARK: - Properties
     private let classifiedAd: CoreClassifiedAd
     private let categoryName: String
-    private let imageLoader: CoreImageLoader
+    private let imageLoader: ImageLoader
     
     // MARK: - UI Components
     private let scrollView: UIScrollView = {
@@ -121,7 +121,7 @@ class ClassifiedDetailViewController: UIViewController {
     }()
     
     // MARK: - Initialization
-    init(classifiedAd: CoreClassifiedAd, categoryName: String, imageLoader: CoreImageLoader = CoreImageLoader.shared) {
+    init(classifiedAd: CoreClassifiedAd, categoryName: String, imageLoader: ImageLoader = ImageLoader.shared) {
         self.classifiedAd = classifiedAd
         self.categoryName = categoryName
         self.imageLoader = imageLoader

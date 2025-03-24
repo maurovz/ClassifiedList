@@ -18,6 +18,3 @@ public typealias CoreClassifiedService = ClassifiedService
 public typealias CoreClassifiedServiceProtocol = ClassifiedServiceProtocol
 public typealias CoreClassifiedRepository = ClassifiedRepository
 public typealias CoreSortOption = SortOption
-
-public typealias CoreImageLoader = ImageLoader
-public typealias CoreImageLoadingError = ImageLoadingError 

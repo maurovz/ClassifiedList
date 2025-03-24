@@ -1,13 +1,13 @@
 import Foundation
 import UIKit
 
-public enum ImageLoadingError: Error {
+enum ImageLoadingError: Error {
     case invalidURL
     case networkError(Error)
     case invalidData
     case decodingError
     
-    public var localizedDescription: String {
+    var localizedDescription: String {
         switch self {
         case .invalidURL:
             return "Invalid image URL"
@@ -21,11 +21,11 @@ public enum ImageLoadingError: Error {
     }
 }
 
-public class ImageLoader {
+class ImageLoader {
     private let session: URLSession
     private let cache: NSCache<NSString, AnyObject>
     
-    public static let shared = ImageLoader()
+    static let shared = ImageLoader()
     
     private init(session: URLSession = .shared) {
         self.session = session
@@ -33,7 +33,7 @@ public class ImageLoader {
         self.cache.countLimit = 100
     }
     
-    public func loadImage(from url: URL?, completion: @escaping (Result<UIImage, ImageLoadingError>) -> Void) {
+    func loadImage(from url: URL?, completion: @escaping (Result<UIImage, ImageLoadingError>) -> Void) {
         guard let url = url else {
             completion(.failure(.invalidURL))
             return
@@ -70,7 +70,7 @@ public class ImageLoader {
         task.resume()
     }
     
-    public func clearCache() {
+    func clearCache() {
         cache.removeAllObjects()
     }
 } 

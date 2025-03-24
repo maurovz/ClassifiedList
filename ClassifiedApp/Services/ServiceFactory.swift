@@ -35,8 +35,8 @@ class ServiceFactory {
         return InMemoryCacheManager()
     }
     
-    func createImageLoader() -> CoreImageLoader {
-        return CoreImageLoader.shared
+    func createImageLoader() -> ImageLoader {
+        return ImageLoader.shared
     }
     
     // MARK: - Coordinators Factory Methods

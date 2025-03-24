@@ -5,7 +5,7 @@ class ClassifiedAdCell: UICollectionViewCell {
     static let reuseIdentifier = "ClassifiedAdCell"
     
     // MARK: - Properties
-    private var imageLoader: CoreImageLoader?
+    private var imageLoader: ImageLoader?
     
     // MARK: - UI Components
     private let containerView: UIView = {
@@ -149,7 +149,7 @@ class ClassifiedAdCell: UICollectionViewCell {
     }
     
     // MARK: - Configuration
-    func configure(with ad: CoreClassifiedAd, categoryName: String, imageLoader: CoreImageLoader = CoreImageLoader.shared) {
+    func configure(with ad: CoreClassifiedAd, categoryName: String, imageLoader: ImageLoader = ImageLoader.shared) {
         self.imageLoader = imageLoader
         
         titleLabel.text = ad.title

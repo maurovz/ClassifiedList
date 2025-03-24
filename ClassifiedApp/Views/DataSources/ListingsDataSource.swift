@@ -5,11 +5,11 @@ class ListingsDataSource: NSObject, UICollectionViewDataSource, UICollectionView
     
     // MARK: - Properties
     private let viewModel: ClassifiedListViewModel
-    private let imageLoader: CoreImageLoader
+    private let imageLoader: ImageLoader
     weak var delegate: ListingsDataSourceDelegate?
     
     // MARK: - Initialization
-    init(viewModel: ClassifiedListViewModel, imageLoader: CoreImageLoader) {
+    init(viewModel: ClassifiedListViewModel, imageLoader: ImageLoader) {
         self.viewModel = viewModel
         self.imageLoader = imageLoader
         super.init()

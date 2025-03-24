@@ -10,7 +10,7 @@ class ClassifiedListViewController: UIViewController {
     
     // MARK: - Properties
     private let viewModel: ClassifiedListViewModel
-    private let imageLoader: CoreImageLoader
+    private let imageLoader: ImageLoader
     weak var coordinator: ClassifiedListCoordinator?
     
     // MARK: - Data Sources
@@ -70,14 +70,14 @@ class ClassifiedListViewController: UIViewController {
     
     // MARK: - Initialization
     init(viewModel: ClassifiedListViewModel? = nil, 
-         imageLoader: CoreImageLoader = CoreImageLoader.shared,
+         imageLoader: ImageLoader = ImageLoader.shared,
          coordinator: ClassifiedListCoordinator? = nil) {
         self.viewModel = viewModel ?? ClassifiedListViewModel(
             repository: ServiceFactory.shared.createClassifiedRepository()
         )
         self.imageLoader = imageLoader
         self.coordinator = coordinator
-        
+                
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -85,7 +85,7 @@ class ClassifiedListViewController: UIViewController {
         self.viewModel = ClassifiedListViewModel(
             repository: ServiceFactory.shared.createClassifiedRepository()
         )
-        self.imageLoader = CoreImageLoader.shared
+        self.imageLoader = ImageLoader.shared
         self.coordinator = nil
         super.init(coder: coder)
     }
@@ -223,10 +223,6 @@ extension ClassifiedListViewController: CategoriesDataSourceDelegate {
 // MARK: - ListingsDataSourceDelegate
 extension ClassifiedListViewController: ListingsDataSourceDelegate {
     func listingsDataSource(_ dataSource: ListingsDataSource, didSelectAd ad: CoreClassifiedAd, withCategoryName categoryName: String) {
-        if coordinator == nil {
-            print("Error: coordinator is nil, navigation won't work")
-        }
-        
         coordinator?.showDetail(for: ad, categoryName: categoryName)
     }
 }
